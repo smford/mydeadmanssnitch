@@ -49,9 +49,9 @@ func init() {
 
 	if *tempmessage == "" {
 		currenttime := time.Now().Format(time.RFC850)
-		message = []string{currenttime}
+		message = currenttime
 	} else {
-		message = tempmessage
+		message = *tempmessage
 	}
 
 	if *configFile == "" {
@@ -81,10 +81,14 @@ func main() {
 
 	//fmt.Println(currenttime)
 
+	if !viper.GetBool("silent") {
+		fmt.Println("Message:", message)
+	}
+
 	uri := fmt.Sprintf("https://nosnch.in/%s", snitch)
 	data := url.Values{
 		//"m": []string{currenttime},
-		"m": message,
+		"m": []string{message},
 	}
 	resp, err := client.PostForm(uri, data)
 	if err != nil {
