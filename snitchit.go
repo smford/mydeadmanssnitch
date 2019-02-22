@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,7 @@ const appversion = 0.01
 
 var (
 	configFile string
+	configPath string
 	message    string
 	silent     bool
 	snitch     string
@@ -28,8 +30,9 @@ var (
 func init() {
 	flag.Bool("help", false, "Display help")
 	tempmessage := flag.String("message", "", "Mesage to display, default = \"Thursday, 21-Feb-19 19:15:09 GMT\" format")
-	flag.Bool("version", false, "Display version")
-	configFile := flag.String("config", "", "name of configuration file")
+	flag.Bool("version", false, "Version")
+	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
+	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -45,7 +48,8 @@ func init() {
 		os.Exit(0)
 	}
 
-	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(*configPath)
 
 	if *tempmessage == "" {
 		currenttime := time.Now().Format(time.RFC850)
@@ -54,16 +58,14 @@ func init() {
 		message = *tempmessage
 	}
 
-	if *configFile == "" {
-		viper.SetConfigName("config")
-	} else {
-		viper.SetConfigName(*configFile)
-	}
+	config := strings.TrimSuffix(*configFile, ".yaml")
+	fmt.Printf("Loading: %s/%s\n", *configPath, *configFile)
 
+	viper.SetConfigName(config)
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		fmt.Println("error loading config")
+		fmt.Printf("ERROR loading configuration file: %s/%s\n", *configPath, *configFile)
 		os.Exit(1)
 	}
 	snitch = viper.GetString("snitch")
@@ -78,8 +80,6 @@ func main() {
 	client.Timeout = time.Second * 15
 
 	//currenttime := time.Now().Format(time.RFC850)
-
-	//fmt.Println(currenttime)
 
 	if !viper.GetBool("silent") {
 		fmt.Println("Message:", message)
