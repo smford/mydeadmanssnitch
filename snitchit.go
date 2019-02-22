@@ -36,7 +36,7 @@ func init() {
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
-	snitch = *flag.String("snitch", "", "Snitch to use")
+	flag.String("snitch", "", "Snitch to use")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -73,8 +73,12 @@ func init() {
 		os.Exit(1)
 	}
 
-	if snitch == "" {
+	fmt.Println("viper snitch:", viper.GetString("snitch"))
+
+	if viper.GetString("snitch") == "" {
 		snitch = viper.GetString("defaultsnitch")
+	} else {
+		snitch = viper.GetString("snitch")
 	}
 
 	silent = viper.GetBool("silent")
@@ -84,14 +88,32 @@ func init() {
 
 func main() {
 	displayConfig()
-	client := &http.Client{}
-	client.Timeout = time.Second * 15
 
 	if !viper.GetBool("silent") {
 		fmt.Println("Message:", message)
 	}
 
-	uri := fmt.Sprintf("https://nosnch.in/%s", snitch)
+	sendSnitch(snitch)
+}
+
+func displayConfig() {
+	fmt.Println("CONFIG: file :", viper.ConfigFileUsed())
+	allmysettings := viper.AllSettings()
+	var keys []string
+	for k := range allmysettings {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Println("CONFIG:", k, ":", allmysettings[k])
+	}
+}
+
+func sendSnitch(sendsnitch string) {
+	client := &http.Client{}
+	client.Timeout = time.Second * 15
+	fmt.Printf("sending snitch: https://nosnch.in/%s\n", sendsnitch)
+	uri := fmt.Sprintf("https://nosnch.in/%s", sendsnitch)
 	data := url.Values{
 		"m": []string{message},
 	}
@@ -110,17 +132,8 @@ func main() {
 	}
 }
 
-func displayConfig() {
-	fmt.Println("CONFIG: file :", viper.ConfigFileUsed())
-	allmysettings := viper.AllSettings()
-	var keys []string
-	for k := range allmysettings {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		fmt.Println("CONFIG:", k, ":", allmysettings[k])
-	}
+func displaySnitch(snitch string) {
+
 }
 
 func displayHelp() {
