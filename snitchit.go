@@ -29,7 +29,7 @@ var (
 
 func init() {
 	flag.Bool("help", false, "Display help")
-	tempmessage := flag.String("message", "", "Mesage to display, default = \"2006-01-02T15:04:05Z07:00\" format")
+	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
 	flag.Bool("version", false, "Version")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
@@ -117,7 +117,14 @@ func displayConfig() {
 
 func displayHelp() {
 	helpmessage := `
-some temp help message
+snitchit
+
+  --config [config file]             Configuration file, default = config.yaml
+  --help                             Display help
+  --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
+  --path [path to config file]       Path to configuration file, default = current directory
+  --show                             Display snitches
+  --version                          Version
 `
 	fmt.Printf("%s", helpmessage)
 }
