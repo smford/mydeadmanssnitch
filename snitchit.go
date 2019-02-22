@@ -29,7 +29,7 @@ var (
 
 func init() {
 	flag.Bool("help", false, "Display help")
-	tempmessage := flag.String("message", "", "Mesage to display, default = \"Thursday, 21-Feb-19 19:15:09 GMT\" format")
+	tempmessage := flag.String("message", "", "Mesage to display, default = \"2006-01-02T15:04:05Z07:00\" format")
 	flag.Bool("version", false, "Version")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
@@ -52,7 +52,7 @@ func init() {
 	viper.AddConfigPath(*configPath)
 
 	if *tempmessage == "" {
-		currenttime := time.Now().Format(time.RFC850)
+		currenttime := time.Now().Format(time.RFC3339)
 		message = currenttime
 	} else {
 		message = *tempmessage
@@ -79,15 +79,12 @@ func main() {
 	client := &http.Client{}
 	client.Timeout = time.Second * 15
 
-	//currenttime := time.Now().Format(time.RFC850)
-
 	if !viper.GetBool("silent") {
 		fmt.Println("Message:", message)
 	}
 
 	uri := fmt.Sprintf("https://nosnch.in/%s", snitch)
 	data := url.Values{
-		//"m": []string{currenttime},
 		"m": []string{message},
 	}
 	resp, err := client.PostForm(uri, data)
