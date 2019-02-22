@@ -20,11 +20,13 @@ import (
 const appversion = 0.01
 
 var (
-	configFile string
-	configPath string
-	message    string
-	silent     bool
-	snitch     string
+	configFile    string
+	configPath    string
+	defaultsnitch string
+	message       string
+	showsnitches  bool
+	silent        bool
+	snitch        string
 )
 
 func init() {
@@ -33,6 +35,8 @@ func init() {
 	flag.Bool("version", false, "Version")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
+	showsnitches = *flag.Bool("show", false, "Show snitches")
+	snitch = *flag.String("snitch", "", "Snitch to use")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -68,7 +72,11 @@ func init() {
 		fmt.Printf("ERROR loading configuration file: %s/%s\n", *configPath, *configFile)
 		os.Exit(1)
 	}
-	snitch = viper.GetString("snitch")
+
+	if snitch == "" {
+		snitch = viper.GetString("defaultsnitch")
+	}
+
 	silent = viper.GetBool("silent")
 	fmt.Println("snitch=", snitch)
 	fmt.Println("silent=", silent)
@@ -124,6 +132,7 @@ snitchit
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --path [path to config file]       Path to configuration file, default = current directory
   --show                             Display snitches
+  --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --version                          Version
 `
 	fmt.Printf("%s", helpmessage)
