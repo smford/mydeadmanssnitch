@@ -20,8 +20,6 @@ import (
 const appversion = 0.01
 
 var (
-	configFile    string
-	configPath    string
 	defaultsnitch string
 	message       string
 	showsnitches  bool
