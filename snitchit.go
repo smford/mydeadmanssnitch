@@ -3,6 +3,7 @@ package main
 // snitchit.go
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/spf13/pflag"
@@ -14,8 +15,22 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
+
+type Snitches []struct {
+	Token       string    `json:"token"`
+	Href        string    `json:"href"`
+	Name        string    `json:"name"`
+	Tags        []string  `json:"tags"`
+	Notes       string    `json:"notes,omitempty"`
+	Status      string    `json:"status"`
+	CheckedInAt time.Time `json:"checked_in_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	Interval    string    `json:"interval"`
+	AlertType   string    `json:"alert_type"`
+}
 
 const appversion = 0.01
 
@@ -91,6 +106,12 @@ func main() {
 		fmt.Println("Message:", message)
 	}
 
+	if viper.GetBool("show") {
+		snitch = ""
+		displaySnitch(snitch)
+		os.Exit(0)
+	}
+
 	sendSnitch(snitch)
 }
 
@@ -110,6 +131,7 @@ func displayConfig() {
 func sendSnitch(sendsnitch string) {
 	client := &http.Client{}
 	client.Timeout = time.Second * 15
+	sendsnitch = url.QueryEscape(sendsnitch)
 	fmt.Printf("sending snitch: https://nosnch.in/%s\n", sendsnitch)
 	uri := fmt.Sprintf("https://nosnch.in/%s", sendsnitch)
 	data := url.Values{
@@ -131,6 +153,47 @@ func sendSnitch(sendsnitch string) {
 }
 
 func displaySnitch(snitch string) {
+	snitch = url.QueryEscape(snitch)
+	fmt.Printf("displaying snitches: https://api.deadmanssnitch.com/v1/snitches/%s\n", snitch)
+	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", snitch)
+
+	apikey := viper.GetString("apikey")
+
+	req, err := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth(apikey, "")
+	if err != nil {
+		log.Fatal("NewRequest: ", err)
+		return
+	}
+
+	client := &http.Client{}
+	client.Timeout = time.Second * 15
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Do: ", err)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	var mysnitches Snitches
+
+	if err := json.NewDecoder(resp.Body).Decode(&mysnitches); err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println("mysnitches", mysnitches)
+
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 8, 8, 0, 8, '\t', 0)
+	defer w.Flush()
+	fmt.Fprintf(w, "\n %s\t%s\t%s\t%s\t", "Snitch", "Name", "Status", "checked_in_at")
+	fmt.Fprintf(w, "\n %s\t%s\t%s\t%s\t", "----", "----", "----", "------------")
+
+	for _, onesnitch := range mysnitches {
+		fmt.Printf("snitch:")
+	}
 
 }
 
