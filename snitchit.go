@@ -186,13 +186,14 @@ func displaySnitch(snitch string) {
 	fmt.Println("mysnitches", mysnitches)
 
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 8, 8, 0, 8, '\t', 0)
+	// minwidth, tabwidth, padding, padchar, flags
+	w.Init(os.Stdout, 10, 8, 4, '\t', 0)
 	defer w.Flush()
-	fmt.Fprintf(w, "\n %s\t%s\t%s\t%s\t", "Snitch", "Name", "Status", "checked_in_at")
-	fmt.Fprintf(w, "\n %s\t%s\t%s\t%s\t", "----", "----", "----", "------------")
+	fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Snitch", "Name", "Status", "Last CheckIn", "Interval", "Alert Type", "Notes", "Tags")
+	//fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t", "----------", "----------", "----------", "----------")
 
 	for _, onesnitch := range mysnitches {
-		fmt.Printf("snitch:")
+		fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", onesnitch.Token, onesnitch.Name, onesnitch.Status, onesnitch.CheckedInAt.Format("2006-01-02 15:04:05"), onesnitch.Interval, onesnitch.AlertType, onesnitch.Notes, onesnitch.Tags)
 	}
 
 }
