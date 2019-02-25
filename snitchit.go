@@ -214,7 +214,8 @@ snitchit
   --help                             Display help
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --path [path to config file]       Path to configuration file, default = current directory
-  --show                             Display snitches
+  --show                             Display all snitches
+  --show --snitch [snitch]           Show details for a specific snitch
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --version                          Version
 `
