@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-type Snitches []struct {
+type oneSnitch struct {
 	Token       string    `json:"token"`
 	Href        string    `json:"href"`
 	Name        string    `json:"name"`
@@ -107,7 +107,6 @@ func main() {
 	}
 
 	if viper.GetBool("show") {
-		snitch = ""
 		displaySnitch(snitch)
 		os.Exit(0)
 	}
@@ -177,23 +176,28 @@ func displaySnitch(snitch string) {
 
 	defer resp.Body.Close()
 
-	var mysnitches Snitches
+	var mysnitches []oneSnitch
 
-	if err := json.NewDecoder(resp.Body).Decode(&mysnitches); err != nil {
-		log.Println(err)
+	if snitch != "" {
+		var singleSnitch oneSnitch
+		if err := json.NewDecoder(resp.Body).Decode(&singleSnitch); err != nil {
+			log.Println(err)
+		}
+		mysnitches = append(mysnitches, singleSnitch)
+	} else {
+		if err := json.NewDecoder(resp.Body).Decode(&mysnitches); err != nil {
+			log.Println(err)
+		}
 	}
-
-	fmt.Println("mysnitches", mysnitches)
 
 	w := new(tabwriter.Writer)
 	// minwidth, tabwidth, padding, padchar, flags
 	w.Init(os.Stdout, 10, 8, 4, '\t', 0)
 	defer w.Flush()
 	fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Snitch", "Name", "Status", "Last CheckIn", "Interval", "Alert Type", "Notes", "Tags")
-	//fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t", "----------", "----------", "----------", "----------")
 
 	for _, onesnitch := range mysnitches {
-		fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", onesnitch.Token, onesnitch.Name, onesnitch.Status, onesnitch.CheckedInAt.Format("2006-01-02 15:04:05"), onesnitch.Interval, onesnitch.AlertType, onesnitch.Notes, onesnitch.Tags)
+		fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t[%s]\n", onesnitch.Token, onesnitch.Name, onesnitch.Status, onesnitch.CheckedInAt.Format("2006-01-02 15:04:05"), onesnitch.Interval, onesnitch.AlertType, onesnitch.Notes, strings.Join(onesnitch.Tags, ","))
 	}
 
 }
