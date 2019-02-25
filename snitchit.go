@@ -37,6 +37,7 @@ const appversion = 0.01
 var (
 	defaultsnitch string
 	message       string
+	pause         bool
 	showsnitches  bool
 	silent        bool
 	snitch        string
@@ -48,6 +49,7 @@ func init() {
 	flag.Bool("version", false, "Version")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
+	pause = *flag.Bool("pause", false, "Pause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.String("snitch", "", "Snitch to use")
 
@@ -108,6 +110,11 @@ func main() {
 
 	if viper.GetBool("show") {
 		displaySnitch(snitch)
+		os.Exit(0)
+	}
+
+	if viper.GetBool("pause") {
+		pauseSnitch(snitch)
 		os.Exit(0)
 	}
 
@@ -204,6 +211,15 @@ func displaySnitch(snitch string) {
 		}
 	}
 
+}
+
+func pauseSnitch(snitch string) {
+	fmt.Println("Pausing snitch:", snitch)
+	actionSnitch(snitch + "/pause")
+}
+
+func actionSnitch(action string) {
+	fmt.Println("running action:", action)
 }
 
 func displayHelp() {
