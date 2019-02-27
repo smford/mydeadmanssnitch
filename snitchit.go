@@ -37,7 +37,6 @@ const appversion = 0.01
 var (
 	defaultsnitch string
 	message       string
-	pause         bool
 	showsnitches  bool
 	silent        bool
 	snitch        string
@@ -49,7 +48,8 @@ func init() {
 	flag.Bool("version", false, "Version")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
-	pause = *flag.Bool("pause", false, "Pause a snitch")
+	flag.String("pause", "", "Pause a snitch")
+	flag.String("unpause", "", "Unpause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.String("snitch", "", "Snitch to use")
 
@@ -113,8 +113,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	if viper.GetBool("pause") {
-		pauseSnitch(snitch)
+	if viper.GetString("pause") != "" {
+		pauseSnitch(viper.GetString("pause"))
+		os.Exit(0)
+	}
+
+	if viper.GetString("unpause") != "" {
+		message = "Unpausing: " + message
+		unpauseSnitch(viper.GetString("unpause"))
 		os.Exit(0)
 	}
 
@@ -215,11 +221,40 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	actionSnitch(snitch + "/pause")
+	actionSnitch(snitch+"/pause", "POST")
 }
 
-func actionSnitch(action string) {
-	fmt.Println("running action:", action)
+func unpauseSnitch(snitch string) {
+	fmt.Println("Unpausing snitch:", snitch)
+	sendSnitch(snitch)
+}
+
+func actionSnitch(action string, httpaction string) {
+	fmt.Println("running action:", action, " ", httpaction)
+	snitch = url.QueryEscape(snitch)
+	fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
+	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", action)
+
+	apikey := viper.GetString("apikey")
+
+	req, err := http.NewRequest(httpaction, url, nil)
+	req.SetBasicAuth(apikey, "")
+	if err != nil {
+		log.Fatal("NewRequest: ", err)
+		return
+	}
+
+	client := &http.Client{}
+	client.Timeout = time.Second * 15
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Do: ", err)
+		return
+	}
+
+	defer resp.Body.Close()
+
 }
 
 func displayHelp() {
@@ -230,9 +265,11 @@ snitchit
   --help                             Display help
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --path [path to config file]       Path to configuration file, default = current directory
+  --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
   --show --snitch [snitch]           Show details for a specific snitch
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
+  --unpause [snitch]                 Unpause a snitch
   --version                          Version
 `
 	fmt.Printf("%s", helpmessage)
