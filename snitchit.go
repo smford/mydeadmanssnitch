@@ -107,10 +107,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	if !silent {
-		fmt.Println("Message:", message)
-	}
-
 	if viper.GetBool("show") {
 		displaySnitch(snitch)
 		os.Exit(0)
@@ -127,6 +123,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	if !silent {
+		fmt.Println("Message:", message)
+	}
 	sendSnitch(snitch)
 }
 
