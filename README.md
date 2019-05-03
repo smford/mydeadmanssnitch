@@ -5,6 +5,7 @@ A simple command line tool that can be used to raise snitches (check in) to [Dea
 Typically used in cronjob to send snitch messages, but useful for self registration of snitches in a cloud environment. 
 
 
+## Command line options
 ```
   --config [config file]             Configuration file, default = config.yaml
   --displayconfig                    Display configuration
@@ -18,4 +19,10 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
   --version                          Version
+```
+
+## Configuration file
+```
+snitch: abcdefghijkl
+silent: false
 ```
