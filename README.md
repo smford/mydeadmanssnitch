@@ -23,6 +23,11 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
 
 ## Configuration file
 ```
-snitch: abcdefghijkl
+apikey: my-api-key
+defaultsnitch: 10ffbf9437f6
 silent: false
+snitches:
+- 10ffbf9437f6
+- snitch2
+- snitch3
 ```
