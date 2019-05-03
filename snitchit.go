@@ -43,17 +43,17 @@ var (
 )
 
 func init() {
+	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
+	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
 	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
-	flag.Bool("version", false, "Version")
-	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
-	flag.String("unpause", "", "Unpause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
-	flag.String("snitch", "", "Snitch to use")
-	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("silent", false, "Be silent")
+	flag.String("snitch", "", "Snitch to use")
+	flag.String("unpause", "", "Unpause a snitch")
+	flag.Bool("version", false, "Version")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
