@@ -97,8 +97,6 @@ func init() {
 	}
 
 	silent = viper.GetBool("silent")
-	fmt.Println("snitch=", snitch)
-	fmt.Println("silent=", silent)
 }
 
 func main() {
