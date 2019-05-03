@@ -1,4 +1,4 @@
-# My Deadmans Snitch
+# Snitchit
 
 A simple command line tool that can be used to raise snitches (check in) to [Deadmanssnitch.com](https://deadmanssnitch.com), list snitches, check status of snitches, and pause and unpause snitchs.
 
