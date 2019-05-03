@@ -52,6 +52,7 @@ func init() {
 	flag.String("unpause", "", "Unpause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.String("snitch", "", "Snitch to use")
+	flag.Bool("displayconfig", false, "Display configuration")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -100,7 +101,10 @@ func init() {
 }
 
 func main() {
-	displayConfig()
+	if viper.GetBool("displayconfig") {
+		displayConfig()
+		os.Exit(0)
+	}
 
 	if !viper.GetBool("silent") {
 		fmt.Println("Message:", message)
@@ -260,6 +264,7 @@ func displayHelp() {
 snitchit
 
   --config [config file]             Configuration file, default = config.yaml
+  --displayconfig                    Display configuration
   --help                             Display help
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --path [path to config file]       Path to configuration file, default = current directory
