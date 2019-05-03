@@ -1,6 +1,6 @@
 # Snitchit
 
-A simple command line tool that can be used to raise snitches (check in) to [Deadmanssnitch.com](https://deadmanssnitch.com), list snitches, check status of snitches, and pause and unpause snitchs.
+A simple command line tool that can be used to raise snitches (check in) to [Deadmanssnitch.com](https://deadmanssnitch.com), list snitches, check status of snitches, and pause/unpause snitches.
 
 Typically used in cronjob to send snitch messages, but useful for self registration of snitches in a cloud environment. 
 
