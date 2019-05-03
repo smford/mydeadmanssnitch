@@ -14,6 +14,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
   --show --snitch [snitch]           Show details for a specific snitch
+  --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
   --version                          Version
