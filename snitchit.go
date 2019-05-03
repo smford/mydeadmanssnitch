@@ -53,6 +53,7 @@ func init() {
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.String("snitch", "", "Snitch to use")
 	flag.Bool("displayconfig", false, "Display configuration")
+	flag.Bool("silent", false, "Be silent")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -79,7 +80,7 @@ func init() {
 	}
 
 	config := strings.TrimSuffix(*configFile, ".yaml")
-	fmt.Printf("Loading: %s/%s\n", *configPath, *configFile)
+	// fmt.Printf("Loading: %s/%s\n", *configPath, *configFile)
 
 	viper.SetConfigName(config)
 	err := viper.ReadInConfig()
@@ -89,7 +90,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	fmt.Println("viper snitch:", viper.GetString("snitch"))
+	// fmt.Println("Snitch:", viper.GetString("snitch"))
 
 	if viper.GetString("snitch") == "" {
 		snitch = viper.GetString("defaultsnitch")
@@ -106,7 +107,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if !viper.GetBool("silent") {
+	if !silent {
 		fmt.Println("Message:", message)
 	}
 
@@ -146,7 +147,9 @@ func sendSnitch(sendsnitch string) {
 	client := &http.Client{}
 	client.Timeout = time.Second * 15
 	sendsnitch = url.QueryEscape(sendsnitch)
-	fmt.Printf("sending snitch: https://nosnch.in/%s\n", sendsnitch)
+	if !silent {
+		fmt.Printf("Snitch: https://nosnch.in/%s\n", sendsnitch)
+	}
 	uri := fmt.Sprintf("https://nosnch.in/%s", sendsnitch)
 	data := url.Values{
 		"m": []string{message},
@@ -161,8 +164,8 @@ func sendSnitch(sendsnitch string) {
 	if err != nil {
 		log.Fatalf("ioutil.ReadAll() failed with '%s'\n", err)
 	}
-	if !viper.GetBool("silent") {
-		fmt.Printf("response=%s\n", snitchresponse)
+	if !silent {
+		fmt.Printf("Response: %s\n", snitchresponse)
 	}
 }
 
@@ -271,6 +274,7 @@ snitchit
   --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
   --show --snitch [snitch]           Show details for a specific snitch
+  --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
   --version                          Version
