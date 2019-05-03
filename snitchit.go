@@ -170,7 +170,6 @@ func sendSnitch(sendsnitch string) {
 
 func displaySnitch(snitch string) {
 	snitch = url.QueryEscape(snitch)
-	fmt.Printf("displaying snitches: https://api.deadmanssnitch.com/v1/snitches/%s\n", snitch)
 	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", snitch)
 
 	apikey := viper.GetString("apikey")
