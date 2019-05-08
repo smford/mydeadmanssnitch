@@ -35,6 +35,7 @@ type oneSnitch struct {
 const appversion = 0.01
 
 var (
+	apikey        string
 	defaultsnitch string
 	message       string
 	showsnitches  bool
@@ -43,6 +44,7 @@ var (
 )
 
 func init() {
+	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
@@ -264,6 +266,7 @@ func displayHelp() {
 	helpmessage := `
 snitchit
 
+  --apikey [api key]                 Deadmanssnitch.com API key
   --config [config file]             Configuration file, default = config.yaml
   --displayconfig                    Display configuration
   --help                             Display help
