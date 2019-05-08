@@ -101,6 +101,7 @@ func init() {
 		snitch = viper.GetString("snitch")
 	}
 
+	apikey = viper.GetString("apikey")
 	silent = viper.GetBool("silent")
 }
 
@@ -172,10 +173,14 @@ func sendSnitch(sendsnitch string) {
 }
 
 func displaySnitch(snitch string) {
+
+	if len(apikey) == 0 {
+		fmt.Println("ERROR: No API Key provided")
+		os.Exit(1)
+	}
+
 	snitch = url.QueryEscape(snitch)
 	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", snitch)
-
-	apikey := viper.GetString("apikey")
 
 	req, err := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(apikey, "")
@@ -236,12 +241,16 @@ func unpauseSnitch(snitch string) {
 }
 
 func actionSnitch(action string, httpaction string) {
+
+	if len(apikey) == 0 {
+		fmt.Println("ERROR: No API Key provided")
+		os.Exit(1)
+	}
+
 	fmt.Println("running action:", action, " ", httpaction)
 	snitch = url.QueryEscape(snitch)
 	fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
 	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", action)
-
-	apikey := viper.GetString("apikey")
 
 	req, err := http.NewRequest(httpaction, url, nil)
 	req.SetBasicAuth(apikey, "")
