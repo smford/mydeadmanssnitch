@@ -5,3 +5,4 @@ RUN chmod +x /snitchit
 COPY files/config.yaml /config.yaml
 RUN cat /config.yaml
 RUN /snitchit --message insidealpine1
+ENTRYPOINT exec /bin/sh -c "trap : TERM INT; (while true; do sleep 1000; done) & wait"
