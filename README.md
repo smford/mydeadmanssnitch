@@ -7,6 +7,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
 
 ## Command line options
 ```
+  --apikey [api key]                 Deadmanssnitch.com API Key
   --config [config file]             Configuration file, default = config.yaml
   --displayconfig                    Display configuration
   --help                             Display help
