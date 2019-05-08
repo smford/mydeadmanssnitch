@@ -32,12 +32,22 @@ type oneSnitch struct {
 	AlertType   string    `json:"alert_type"`
 }
 
+type newSnitch struct {
+	Name      string   `json:"name"`
+	AlertType string   `json:"alert_type"`
+	Interval  string   `json:"interval"`
+	Notes     string   `json:"notes"`
+	Tags      []string `json:"tags"`
+}
+
 const appversion = 0.01
 
 var (
 	apikey        string
 	defaultsnitch string
+	interval      string
 	message       string
+	name          string
 	showsnitches  bool
 	silent        bool
 	snitch        string
@@ -46,9 +56,12 @@ var (
 func init() {
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
+	flag.Bool("create", false, "Create a snitch")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
+	flag.String("interval", "", "\"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
 	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
+	flag.String("name", "", "Name of snitch")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
@@ -103,6 +116,7 @@ func init() {
 
 	apikey = viper.GetString("apikey")
 	silent = viper.GetBool("silent")
+
 }
 
 func main() {
@@ -113,6 +127,16 @@ func main() {
 
 	if viper.GetBool("show") {
 		displaySnitch(snitch)
+		os.Exit(0)
+	}
+
+	if viper.GetBool("create") {
+		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval")}
+
+		//newsnitch["interval"] = viper.GetString("interval")
+		//newsnitch["name"] = viper.GetString("name")
+
+		createSnitch(newsnitch)
 		os.Exit(0)
 	}
 
@@ -278,15 +302,61 @@ func actionSnitch(action string, httpaction string) {
 
 }
 
+func createSnitch(newsnitch newSnitch) {
+	fmt.Println("Creating snitch")
+
+	//snitch = url.QueryEscape(snitch)
+
+	fmt.Println("--------------\n", newsnitch, "\n----------------------")
+
+	if len(newsnitch.Name) == 0 {
+		fmt.Println("snitch name blank")
+		os.Exit(1)
+	}
+
+	if len(newsnitch.Interval) == 0 {
+		fmt.Println("interval blank")
+		os.Exit(1)
+	}
+
+	newsnitch.Interval = strings.ToLower(newsnitch.Interval)
+
+	{
+		fmt.Println("checking interval")
+		switch newsnitch.Interval {
+		case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
+			fmt.Println("valid interval")
+		default:
+			fmt.Println("invalid interval")
+		}
+	}
+
+	// check if existing snitch exists
+	if !existSnitch(newsnitch) {
+		fmt.Printf("Snitch %s already exists\n")
+	} else {
+		fmt.Println("creating snitch")
+	}
+
+}
+
+func existSnitch(snitch newSnitch) bool {
+	fmt.Println("checking existence of snitch:", snitch.Name)
+	return true
+}
+
 func displayHelp() {
 	helpmessage := `
 snitchit
 
   --apikey [api key]                 Deadmanssnitch.com API key
   --config [config file]             Configuration file, default = config.yaml
+  --create [snitch]                  Create snitch, requires --name and --interval
   --displayconfig                    Display configuration
   --help                             Display help
+  --interval [interval window]       "15_minute", "30_minute", "hourly", "daily", "weekly", or "monthly"
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
+  --name [name]                      Name of snitch
   --path [path to config file]       Path to configuration file, default = current directory
   --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
