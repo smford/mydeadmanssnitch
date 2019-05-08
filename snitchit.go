@@ -88,8 +88,9 @@ func init() {
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		fmt.Printf("ERROR loading configuration file: %s/%s\n", *configPath, *configFile)
-		os.Exit(1)
+		if !silent {
+			fmt.Printf("%s\n", err)
+		}
 	}
 
 	// fmt.Println("Snitch:", viper.GetString("snitch"))
