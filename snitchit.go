@@ -88,7 +88,7 @@ func init() {
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		if !silent {
+		if !viper.GetBool("silent") {
 			fmt.Printf("%s\n", err)
 		}
 	}
