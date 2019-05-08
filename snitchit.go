@@ -130,6 +130,12 @@ func main() {
 	if !silent {
 		fmt.Println("Message:", message)
 	}
+
+	if len(snitch) == 0 {
+		fmt.Println("ERROR: No snitch defined")
+		os.Exit(1)
+	}
+
 	sendSnitch(snitch)
 }
 
