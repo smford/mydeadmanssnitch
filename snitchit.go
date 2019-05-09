@@ -54,6 +54,7 @@ var (
 )
 
 func init() {
+	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	flag.Bool("create", false, "Create a snitch")
@@ -140,7 +141,7 @@ func main() {
 
 		fmt.Println("tags:", mytags)
 
-		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), Notes: viper.GetString("notes"), Tags: mytags}
+		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
 
 		//newsnitch["interval"] = viper.GetString("interval")
 		//newsnitch["name"] = viper.GetString("name")
@@ -341,14 +342,22 @@ func createSnitch(newsnitch newSnitch) {
 	}
 
 	newsnitch.Interval = strings.ToLower(newsnitch.Interval)
+	newsnitch.AlertType = strings.ToLower(newsnitch.AlertType)
 
 	{
-		fmt.Println("checking interval")
+		fmt.Println("checking snitch")
 		switch newsnitch.Interval {
 		case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
-			fmt.Println("valid interval")
+			fmt.Println("valid interval:", newsnitch.Interval)
 		default:
-			fmt.Println("invalid interval")
+			fmt.Println("invalid interval:", newsnitch.Interval)
+		}
+
+		switch newsnitch.AlertType {
+		case "basic", "smart":
+			fmt.Println("valid alert type:", newsnitch.AlertType)
+		default:
+			fmt.Println("invalid alert type:", newsnitch.AlertType)
 		}
 	}
 
@@ -374,6 +383,7 @@ func displayHelp() {
 	helpmessage := `
 snitchit
 
+  --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API key
   --config [config file]             Configuration file, default = config.yaml
   --create [snitch]                  Create snitch, requires --name and --interval
