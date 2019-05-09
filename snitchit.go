@@ -314,9 +314,12 @@ func actionSnitch(action string, httpaction string) {
 func createSnitch(newsnitch newSnitch) {
 	fmt.Println("Creating snitch")
 
+	jsonsnitch, _ := json.Marshal(newsnitch)
+	fmt.Println(string(jsonsnitch))
+
 	//snitch = url.QueryEscape(snitch)
 
-	fmt.Println("--------------\n", newsnitch, "\n----------------------")
+	fmt.Println("--------------\n", newsnitch, "\n--------------")
 
 	if len(newsnitch.Name) == 0 {
 		fmt.Println("snitch name blank")
