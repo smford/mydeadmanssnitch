@@ -62,11 +62,13 @@ func init() {
 	flag.String("interval", "", "\"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
 	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
 	flag.String("name", "", "Name of snitch")
+	flag.String("notes", "", "Notes")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.Bool("silent", false, "Be silent")
 	flag.String("snitch", "", "Snitch to use")
+	flag.String("tags", "", "Tags")
 	flag.String("unpause", "", "Unpause a snitch")
 	flag.Bool("version", false, "Version")
 
@@ -131,7 +133,14 @@ func main() {
 	}
 
 	if viper.GetBool("create") {
-		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval")}
+
+		var mytags []string
+
+		mytags = append(mytags, strings.Split(viper.GetString("tags"), ",")...)
+
+		fmt.Println("tags:", mytags)
+
+		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), Notes: viper.GetString("notes"), Tags: mytags}
 
 		//newsnitch["interval"] = viper.GetString("interval")
 		//newsnitch["name"] = viper.GetString("name")
@@ -357,6 +366,7 @@ snitchit
   --interval [interval window]       "15_minute", "30_minute", "hourly", "daily", "weekly", or "monthly"
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --name [name]                      Name of snitch
+  --notes [notes]                    Notes for snitch
   --path [path to config file]       Path to configuration file, default = current directory
   --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
