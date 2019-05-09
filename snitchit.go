@@ -271,7 +271,7 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	actionSnitch(snitch+"/pause", "POST")
+	actionSnitch(snitch+"/pause", "POST", "")
 }
 
 func unpauseSnitch(snitch string) {
@@ -279,7 +279,7 @@ func unpauseSnitch(snitch string) {
 	sendSnitch(snitch)
 }
 
-func actionSnitch(action string, httpaction string) {
+func actionSnitch(action string, httpaction string, customheader string) {
 
 	if len(apikey) == 0 {
 		fmt.Println("ERROR: No API Key provided")
@@ -288,6 +288,8 @@ func actionSnitch(action string, httpaction string) {
 
 	fmt.Println("running action:", action, " ", httpaction)
 	snitch = url.QueryEscape(snitch)
+
+	// if doing a create, action should not be appended for the url
 	fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
 	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", action)
 
@@ -296,6 +298,13 @@ func actionSnitch(action string, httpaction string) {
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
 		return
+	}
+
+	if len(customheader) != 0 {
+		fmt.Println("Customheader:", customheader)
+		req.Header.Add("Content-Type", customheader)
+	} else {
+		fmt.Println("standard header")
 	}
 
 	client := &http.Client{}
@@ -348,6 +357,10 @@ func createSnitch(newsnitch newSnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
 		fmt.Println("creating snitch")
+		//============
+		actionSnitch(string(jsonsnitch), "POST", "application/json")
+		//===========
+
 	}
 
 }
