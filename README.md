@@ -20,6 +20,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
+  --verbose                          Increase verbosity
   --version                          Version
 ```
 
