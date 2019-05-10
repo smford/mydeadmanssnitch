@@ -73,6 +73,7 @@ func init() {
 	flag.String("snitch", "", "Snitch to use")
 	flag.String("tags", "", "Tags")
 	flag.String("unpause", "", "Unpause a snitch")
+	flag.Bool("verbose", false, "Increase verbosity")
 	flag.Bool("version", false, "Version")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -331,12 +332,31 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	client.Timeout = time.Second * 15
 
 	resp, err := client.Do(req)
-	fmt.Println("response err=", err)
-	fmt.Println("response=", resp)
-	fmt.Printf("code=%s  text=%s\n", resp.StatusCode, http.StatusText(resp.StatusCode))
-	if err != nil {
-		log.Fatal("Do: ", err)
-		return
+
+	if viper.GetBool("verbose") {
+		//fmt.Println("response err=", err)
+		//fmt.Println("response=", resp)
+		htmlData, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("responsebody=", string(htmlData))
+		fmt.Printf("code=%d  text=%s\n", resp.StatusCode, http.StatusText(resp.StatusCode))
+		switch {
+		case resp.StatusCode >= 100 && resp.StatusCode <= 199:
+			fmt.Println("Informational:", resp.StatusCode)
+		case resp.StatusCode >= 200 && resp.StatusCode <= 299:
+			fmt.Println("Success:", resp.StatusCode)
+		case resp.StatusCode >= 300 && resp.StatusCode <= 399:
+			fmt.Println("Redirection:", resp.StatusCode)
+		case resp.StatusCode >= 400 && resp.StatusCode <= 499:
+			fmt.Println("Client Errors:", resp.StatusCode)
+		case resp.StatusCode >= 500 && resp.StatusCode <= 599:
+			fmt.Println("Server Error:", resp.StatusCode)
+		default:
+			fmt.Println("StatusCode:", resp.StatusCode)
+		}
+	}
+
+	if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+		fmt.Printf("Error: %d  %s  %s\n", resp.StatusCode, http.StatusText(resp.StatusCode), "htmlbody")
 	}
 
 	defer resp.Body.Close()
@@ -422,6 +442,7 @@ snitchit
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
+  --verbose                          Increase verbosity
   --version                          Version
 `
 	fmt.Printf("%s", helpmessage)
