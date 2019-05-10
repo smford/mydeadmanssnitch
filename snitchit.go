@@ -331,7 +331,9 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	client.Timeout = time.Second * 15
 
 	resp, err := client.Do(req)
-	fmt.Println("response=", err)
+	fmt.Println("response err=", err)
+	fmt.Println("response=", resp)
+	fmt.Printf("code=%s  text=%s\n", resp.StatusCode, http.StatusText(resp.StatusCode))
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
