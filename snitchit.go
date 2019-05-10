@@ -3,6 +3,7 @@ package main
 // snitchit.go
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -54,6 +55,7 @@ var (
 )
 
 func init() {
+	flag.Bool("debug", false, "Enable debugging")
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
@@ -291,10 +293,27 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	snitch = url.QueryEscape(snitch)
 
 	// if doing a create, action should not be appended for the url
-	fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
-	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", action)
+	//fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
 
-	req, err := http.NewRequest(httpaction, url, nil)
+	url := ""
+
+	if !viper.GetBool("debug") {
+		url = "https://api.deadmanssnitch.com/v1/snitches"
+	} else {
+		// nc -l 127.0.0.1 8888
+		url = "http://localhost:8888/v1/snitches"
+	}
+
+	if len(httpaction) == 0 {
+		url = url + "/" + action
+	}
+
+	fmt.Println("url:", url)
+
+	bytesaction := []byte(action)
+
+	//req, err := http.NewRequest(httpaction, url, nil)
+	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
@@ -312,6 +331,7 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	client.Timeout = time.Second * 15
 
 	resp, err := client.Do(req)
+	fmt.Println("response=", err)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return
