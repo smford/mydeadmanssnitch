@@ -41,6 +41,11 @@ type newSnitch struct {
 	Tags      []string `json:"tags"`
 }
 
+type dmsResp struct {
+	Type  string `json:"type"`
+	Error string `json:"error"`
+}
+
 const appversion = 0.01
 
 var (
@@ -333,10 +338,11 @@ func actionSnitch(action string, httpaction string, customheader string) {
 
 	resp, err := client.Do(req)
 
+	htmlData, _ := ioutil.ReadAll(resp.Body)
+
 	if viper.GetBool("verbose") {
 		//fmt.Println("response err=", err)
 		//fmt.Println("response=", resp)
-		htmlData, _ := ioutil.ReadAll(resp.Body)
 		fmt.Println("responsebody=", string(htmlData))
 		fmt.Printf("code=%d  text=%s\n", resp.StatusCode, http.StatusText(resp.StatusCode))
 		switch {
@@ -355,8 +361,14 @@ func actionSnitch(action string, httpaction string, customheader string) {
 		}
 	}
 
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		fmt.Println("Success")
+	}
+
 	if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
-		fmt.Printf("Error: %d  %s  %s\n", resp.StatusCode, http.StatusText(resp.StatusCode), "htmlbody")
+		var errorresponse dmsResp
+		json.Unmarshal(htmlData, &errorresponse)
+		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
 	}
 
 	defer resp.Body.Close()
