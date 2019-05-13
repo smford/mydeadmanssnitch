@@ -65,6 +65,7 @@ func init() {
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
 	flag.Bool("debug", false, "Enable debug mode")
+	flag.String("delete", "", "Delete a snitch")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
 	flag.String("interval", "", "\"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
@@ -148,6 +149,11 @@ func main() {
 		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
 
 		createSnitch(newsnitch)
+		os.Exit(0)
+	}
+
+	if viper.GetString("delete") != "" {
+		deleteSnitch(viper.GetString("delete"))
 		os.Exit(0)
 	}
 
@@ -255,6 +261,11 @@ func displaySnitch(snitch string) {
 		}
 	}
 
+	if len(mysnitches) == 0 {
+		fmt.Println("ERROR: No snitches found")
+		os.Exit(1)
+	}
+
 	w := new(tabwriter.Writer)
 	// minwidth, tabwidth, padding, padchar, flags
 	w.Init(os.Stdout, 10, 8, 4, '\t', 0)
@@ -302,6 +313,14 @@ func actionSnitch(action string, httpaction string, customheader string) {
 
 	if len(httpaction) == 0 {
 		url = url + "/" + action
+	} else {
+		switch {
+		case strings.ToLower(httpaction) == "delete":
+			fmt.Println("Changing action to delete")
+			url = url + "/" + action
+		default:
+			fmt.Println("Some default")
+		}
 	}
 
 	fmt.Println("url:", url)
@@ -411,6 +430,18 @@ func createSnitch(newsnitch newSnitch) {
 
 	}
 
+}
+
+func deleteSnitch(snitchid string) {
+	var delSnitch oneSnitch
+	delSnitch.Name = strings.ToLower(snitchid)
+	//if existSnitch(delsnitch) {
+	if true {
+		fmt.Println("Deleting snitch:", snitchid)
+		actionSnitch(snitchid, "DELETE", "")
+	} else {
+		fmt.Printf("ERROR: Snitch %s not found\n", snitch)
+	}
 }
 
 func existSnitch(snitch newSnitch) bool {
