@@ -64,7 +64,7 @@ func init() {
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
-	flag.Bool("create", false, "Create a snitch")
+	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
 	flag.String("interval", "", "\"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
@@ -440,7 +440,7 @@ snitchit
   --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API key
   --config [config file]             Configuration file, default = config.yaml
-  --create [snitch]                  Create snitch, requires --name and --interval
+  --create                           Create snitch, requires --name and --interval, optional --tags & --notes
   --displayconfig                    Display configuration
   --help                             Display help
   --interval [interval window]       "15_minute", "30_minute", "hourly", "daily", "weekly", or "monthly"
