@@ -7,8 +7,11 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
 
 ## Command line options
 ```
+  --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API Key
+  --create                           Create snitch, requires --name and --interval, optional --tags & --notes
   --config [config file]             Configuration file, default = config.yaml
+  --debug                            Enable debug mode
   --displayconfig                    Display configuration
   --help                             Display help
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
@@ -19,6 +22,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
+  --verbose                          Increase verbosity
   --version                          Version
 ```
 

@@ -3,6 +3,7 @@ package main
 // snitchit.go
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -32,29 +33,52 @@ type oneSnitch struct {
 	AlertType   string    `json:"alert_type"`
 }
 
+type newSnitch struct {
+	Name      string   `json:"name"`
+	AlertType string   `json:"alert_type"`
+	Interval  string   `json:"interval"`
+	Notes     string   `json:"notes"`
+	Tags      []string `json:"tags"`
+}
+
+type dmsResp struct {
+	Type  string `json:"type"`
+	Error string `json:"error"`
+}
+
 const appversion = 0.01
 
 var (
 	apikey        string
 	defaultsnitch string
+	interval      string
 	message       string
+	name          string
 	showsnitches  bool
 	silent        bool
 	snitch        string
 )
 
 func init() {
+	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
+	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
+	flag.Bool("debug", false, "Enable debug mode")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
+	flag.String("interval", "", "\"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
 	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
+	flag.String("name", "", "Name of snitch")
+	flag.String("notes", "", "Notes")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.Bool("silent", false, "Be silent")
 	flag.String("snitch", "", "Snitch to use")
+	flag.String("tags", "", "Tags")
 	flag.String("unpause", "", "Unpause a snitch")
+	flag.Bool("verbose", false, "Increase verbosity")
 	flag.Bool("version", false, "Version")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -93,8 +117,6 @@ func init() {
 		}
 	}
 
-	// fmt.Println("Snitch:", viper.GetString("snitch"))
-
 	if viper.GetString("snitch") == "" {
 		snitch = viper.GetString("defaultsnitch")
 	} else {
@@ -103,6 +125,7 @@ func init() {
 
 	apikey = viper.GetString("apikey")
 	silent = viper.GetBool("silent")
+
 }
 
 func main() {
@@ -113,6 +136,18 @@ func main() {
 
 	if viper.GetBool("show") {
 		displaySnitch(snitch)
+		os.Exit(0)
+	}
+
+	if viper.GetBool("create") {
+
+		var mytags []string
+
+		mytags = append(mytags, strings.Split(viper.GetString("tags"), ",")...)
+
+		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
+
+		createSnitch(newsnitch)
 		os.Exit(0)
 	}
 
@@ -238,7 +273,7 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	actionSnitch(snitch+"/pause", "POST")
+	actionSnitch(snitch+"/pause", "POST", "")
 }
 
 func unpauseSnitch(snitch string) {
@@ -246,7 +281,7 @@ func unpauseSnitch(snitch string) {
 	sendSnitch(snitch)
 }
 
-func actionSnitch(action string, httpaction string) {
+func actionSnitch(action string, httpaction string, customheader string) {
 
 	if len(apikey) == 0 {
 		fmt.Println("ERROR: No API Key provided")
@@ -255,38 +290,149 @@ func actionSnitch(action string, httpaction string) {
 
 	fmt.Println("running action:", action, " ", httpaction)
 	snitch = url.QueryEscape(snitch)
-	fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
-	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", action)
 
-	req, err := http.NewRequest(httpaction, url, nil)
+	url := ""
+
+	if !viper.GetBool("debug") {
+		url = "https://api.deadmanssnitch.com/v1/snitches"
+	} else {
+		// nc -l 127.0.0.1 8888
+		url = "http://localhost:8888/v1/snitches"
+	}
+
+	if len(httpaction) == 0 {
+		url = url + "/" + action
+	}
+
+	fmt.Println("url:", url)
+
+	bytesaction := []byte(action)
+
+	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
 		return
 	}
 
+	if len(customheader) != 0 {
+		fmt.Println("Customheader:", customheader)
+		req.Header.Add("Content-Type", customheader)
+	} else {
+		fmt.Println("standard header")
+	}
+
 	client := &http.Client{}
 	client.Timeout = time.Second * 15
 
 	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("Do: ", err)
-		return
+
+	htmlData, _ := ioutil.ReadAll(resp.Body)
+
+	if viper.GetBool("verbose") {
+		fmt.Println("responsebody=", string(htmlData))
+		fmt.Printf("code=%d  text=%s\n", resp.StatusCode, http.StatusText(resp.StatusCode))
+		switch {
+		case resp.StatusCode >= 100 && resp.StatusCode <= 199:
+			fmt.Println("Informational:", resp.StatusCode)
+		case resp.StatusCode >= 200 && resp.StatusCode <= 299:
+			fmt.Println("Success:", resp.StatusCode)
+		case resp.StatusCode >= 300 && resp.StatusCode <= 399:
+			fmt.Println("Redirection:", resp.StatusCode)
+		case resp.StatusCode >= 400 && resp.StatusCode <= 499:
+			fmt.Println("Client Errors:", resp.StatusCode)
+		case resp.StatusCode >= 500 && resp.StatusCode <= 599:
+			fmt.Println("Server Error:", resp.StatusCode)
+		default:
+			fmt.Println("StatusCode:", resp.StatusCode)
+		}
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		fmt.Println("Success")
+	}
+
+	if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+		var errorresponse dmsResp
+		json.Unmarshal(htmlData, &errorresponse)
+		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
 	}
 
 	defer resp.Body.Close()
 
 }
 
+func createSnitch(newsnitch newSnitch) {
+	fmt.Println("Creating snitch")
+
+	jsonsnitch, _ := json.Marshal(newsnitch)
+	fmt.Println(string(jsonsnitch))
+
+	fmt.Println("--------------\n", newsnitch, "\n--------------")
+
+	if len(newsnitch.Name) == 0 {
+		fmt.Println("snitch name blank")
+		os.Exit(1)
+	}
+
+	if len(newsnitch.Interval) == 0 {
+		fmt.Println("interval blank")
+		os.Exit(1)
+	}
+
+	newsnitch.Interval = strings.ToLower(newsnitch.Interval)
+	newsnitch.AlertType = strings.ToLower(newsnitch.AlertType)
+
+	{
+		fmt.Println("checking snitch")
+		switch newsnitch.Interval {
+		case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
+			fmt.Println("valid interval:", newsnitch.Interval)
+		default:
+			fmt.Println("invalid interval:", newsnitch.Interval)
+		}
+
+		switch newsnitch.AlertType {
+		case "basic", "smart":
+			fmt.Println("valid alert type:", newsnitch.AlertType)
+		default:
+			fmt.Println("invalid alert type:", newsnitch.AlertType)
+		}
+	}
+
+	// check if existing snitch exists
+	if !existSnitch(newsnitch) {
+		fmt.Printf("Snitch %s already exists\n")
+	} else {
+		fmt.Println("creating snitch")
+		//============
+		actionSnitch(string(jsonsnitch), "POST", "application/json")
+		//===========
+
+	}
+
+}
+
+func existSnitch(snitch newSnitch) bool {
+	fmt.Println("checking existence of snitch:", snitch.Name)
+	return true
+}
+
 func displayHelp() {
 	helpmessage := `
 snitchit
 
+  --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API key
   --config [config file]             Configuration file, default = config.yaml
+  --create                           Create snitch, requires --name and --interval, optional --tags & --notes
+  --debug                            Enable debug mode
   --displayconfig                    Display configuration
   --help                             Display help
+  --interval [interval window]       "15_minute", "30_minute", "hourly", "daily", "weekly", or "monthly"
   --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
+  --name [name]                      Name of snitch
+  --notes [notes]                    Notes for snitch
   --path [path to config file]       Path to configuration file, default = current directory
   --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
@@ -294,6 +440,7 @@ snitchit
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
+  --verbose                          Increase verbosity
   --version                          Version
 `
 	fmt.Printf("%s", helpmessage)
