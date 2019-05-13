@@ -284,7 +284,11 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	actionSnitch(snitch+"/pause", "POST", "")
+	if actionSnitch(snitch+"/pause", "POST", "") {
+		fmt.Println("Successfully paused", snitch)
+	} else {
+		fmt.Println("ERROR: Cannot pause snitch", snitch)
+	}
 }
 
 func unpauseSnitch(snitch string) {
@@ -292,7 +296,7 @@ func unpauseSnitch(snitch string) {
 	sendSnitch(snitch)
 }
 
-func actionSnitch(action string, httpaction string, customheader string) {
+func actionSnitch(action string, httpaction string, customheader string) bool {
 
 	if len(apikey) == 0 {
 		fmt.Println("ERROR: No API Key provided")
@@ -331,7 +335,7 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
-		return
+		return false
 	}
 
 	if len(customheader) != 0 {
@@ -375,10 +379,12 @@ func actionSnitch(action string, httpaction string, customheader string) {
 		var errorresponse dmsResp
 		json.Unmarshal(htmlData, &errorresponse)
 		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
+		return false
 	}
 
 	defer resp.Body.Close()
 
+	return true
 }
 
 func createSnitch(newsnitch newSnitch) {
@@ -425,7 +431,11 @@ func createSnitch(newsnitch newSnitch) {
 	} else {
 		fmt.Println("creating snitch")
 		//============
-		actionSnitch(string(jsonsnitch), "POST", "application/json")
+		if actionSnitch(string(jsonsnitch), "POST", "application/json") {
+			fmt.Println("Successfully created snitch")
+		} else {
+			fmt.Println("ERROR: Cannot create snitch", newsnitch.Name)
+		}
 		//===========
 
 	}
@@ -438,7 +448,11 @@ func deleteSnitch(snitchid string) {
 	//if existSnitch(delsnitch) {
 	if true {
 		fmt.Println("Deleting snitch:", snitchid)
-		actionSnitch(snitchid, "DELETE", "")
+		if actionSnitch(snitchid, "DELETE", "") {
+			fmt.Println("Successfully deleted snitch", snitchid)
+		} else {
+			fmt.Println("ERROR: Cannot delete snitch", snitchid)
+		}
 	} else {
 		fmt.Printf("ERROR: Snitch %s not found\n", snitch)
 	}
