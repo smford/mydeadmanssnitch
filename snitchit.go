@@ -261,6 +261,11 @@ func displaySnitch(snitch string) {
 		}
 	}
 
+	if len(mysnitches) == 0 {
+		fmt.Println("ERROR: No snitches found")
+		os.Exit(1)
+	}
+
 	w := new(tabwriter.Writer)
 	// minwidth, tabwidth, padding, padchar, flags
 	w.Init(os.Stdout, 10, 8, 4, '\t', 0)
