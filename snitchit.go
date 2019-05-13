@@ -117,8 +117,6 @@ func init() {
 		}
 	}
 
-	// fmt.Println("Snitch:", viper.GetString("snitch"))
-
 	if viper.GetString("snitch") == "" {
 		snitch = viper.GetString("defaultsnitch")
 	} else {
@@ -147,12 +145,7 @@ func main() {
 
 		mytags = append(mytags, strings.Split(viper.GetString("tags"), ",")...)
 
-		fmt.Println("tags:", mytags)
-
 		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
-
-		//newsnitch["interval"] = viper.GetString("interval")
-		//newsnitch["name"] = viper.GetString("name")
 
 		createSnitch(newsnitch)
 		os.Exit(0)
@@ -298,9 +291,6 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	fmt.Println("running action:", action, " ", httpaction)
 	snitch = url.QueryEscape(snitch)
 
-	// if doing a create, action should not be appended for the url
-	//fmt.Printf("action string: %s https://api.deadmanssnitch.com/v1/snitches/%s\n", httpaction, action)
-
 	url := ""
 
 	if !viper.GetBool("debug") {
@@ -318,7 +308,6 @@ func actionSnitch(action string, httpaction string, customheader string) {
 
 	bytesaction := []byte(action)
 
-	//req, err := http.NewRequest(httpaction, url, nil)
 	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
@@ -341,8 +330,6 @@ func actionSnitch(action string, httpaction string, customheader string) {
 	htmlData, _ := ioutil.ReadAll(resp.Body)
 
 	if viper.GetBool("verbose") {
-		//fmt.Println("response err=", err)
-		//fmt.Println("response=", resp)
 		fmt.Println("responsebody=", string(htmlData))
 		fmt.Printf("code=%d  text=%s\n", resp.StatusCode, http.StatusText(resp.StatusCode))
 		switch {
@@ -380,8 +367,6 @@ func createSnitch(newsnitch newSnitch) {
 
 	jsonsnitch, _ := json.Marshal(newsnitch)
 	fmt.Println(string(jsonsnitch))
-
-	//snitch = url.QueryEscape(snitch)
 
 	fmt.Println("--------------\n", newsnitch, "\n--------------")
 
