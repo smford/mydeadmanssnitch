@@ -87,7 +87,7 @@ func init() {
 	flag.String("snitch", "", "Snitch to use")
 	flag.String("tags", "", "Tags")
 	flag.String("unpause", "", "Unpause a snitch")
-	flag.String("update", "", "Update a snitch")
+	flag.String("update", "", "Update a snitch, can be used with --name, --interval, --tags & --notes")
 	flag.Bool("verbose", false, "Increase verbosity")
 	flag.Bool("version", false, "Version")
 
@@ -645,6 +645,7 @@ snitchit
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
   --unpause [snitch]                 Unpause a snitch
+  --update [snitch]                  Update a snitch, can be used with --name, --interval, --tags & --notes
   --verbose                          Increase verbosity
   --version                          Version
 `
