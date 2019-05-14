@@ -14,7 +14,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --debug                            Enable debug mode
   --displayconfig                    Display configuration
   --help                             Display help
-  --message [messgage to send]       Message to send, default = "2006-01-02T15:04:05Z07:00" format
+  --message [message to send]        Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --path [path to config file]       Path to configuration file, default = current directory
   --pause [snitch]                   Pauses a snitch
   --show                             Display all snitches
