@@ -85,7 +85,7 @@ func init() {
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.Bool("silent", false, "Be silent")
 	flag.String("snitch", "", "Snitch to use")
-	flag.String("tags", "", "Tags")
+	flag.String("tags", "", "Tags separated by commas, \"tag1,tag2,tag3\"")
 	flag.String("unpause", "", "Unpause a snitch")
 	flag.String("update", "", "Update a snitch, can be used with --name, --interval, --tags & --notes")
 	flag.Bool("verbose", false, "Increase verbosity")
@@ -644,6 +644,7 @@ snitchit
   --show --snitch [snitch]           Show details for a specific snitch
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
+  --tags [tags]                      Tags separated by commas, "tag1,tag2,tag3"
   --unpause [snitch]                 Unpause a snitch
   --update [snitch]                  Update a snitch, can be used with --name, --interval, --tags & --notes
   --verbose                          Increase verbosity
