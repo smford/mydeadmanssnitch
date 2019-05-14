@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"io/ioutil"
@@ -524,10 +525,17 @@ func updateSnitch(snitchtoken string) {
 		updatesnitch.Name = viper.GetString("name")
 	}
 
-	//if viper.GetString("notes") != foundSnitch.Notes {
-	//	fmt.Println(foundSnitch.Notes, "->", viper.GetString("notes"))
-	//	newSnitch.Notes = viper.GetString("notes")
-	//}
+	//=============
+	var newtags []string
+	newtags = append(newtags, strings.Split(viper.GetString("tags"), ",")...)
+
+	if !cmp.Equal(foundSnitch.Tags, newtags) {
+		fmt.Println(foundSnitch.Tags, "->", newtags)
+		updatesnitch.Tags = newtags
+	}
+	//=============
+
+	fmt.Println("COMPARING TAGS:", cmp.Equal(foundSnitch.Tags, newtags))
 
 	if viper.GetString("notes") != foundSnitch.Notes {
 		fmt.Println(foundSnitch.Notes, "->", viper.GetString("notes"))
