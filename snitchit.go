@@ -116,7 +116,6 @@ func init() {
 	}
 
 	config := strings.TrimSuffix(*configFile, ".yaml")
-	// fmt.Printf("Loading: %s/%s\n", *configPath, *configFile)
 
 	viper.SetConfigName(config)
 	err := viper.ReadInConfig()
@@ -180,18 +179,7 @@ func main() {
 
 		mytags = append(mytags, strings.Split(viper.GetString("tags"), ",")...)
 
-		//newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
 		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: strings.ToLower(viper.GetString("interval")), AlertType: strings.ToLower(viper.GetString("alert")), Notes: viper.GetString("notes"), Tags: mytags}
-
-		//if !checkAlertType(newsnitch.AlertType) {
-		//	fmt.Println("ERROR: Invalid Alert Type", newsnitch.AlertType, ". Please choose either \"basic\" or \"smart\"")
-		//	os.Exit(1)
-		//}
-
-		//if !checkInterval(newsnitch.Interval) {
-		//	fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
-		//	os.Exit(1)
-		//}
 
 		createSnitch(newsnitch)
 		os.Exit(0)
@@ -453,39 +441,16 @@ func createSnitch(newsnitch newSnitch) {
 	newsnitch.Interval = strings.ToLower(viper.GetString("interval"))
 	newsnitch.AlertType = strings.ToLower(viper.GetString("alert"))
 
-	//======
-	// validation now occuring in func init
-	//if checkInterval(viper.GetString("interval")) {
-	//	newsnitch.Interval = strings.ToLower(viper.GetString("interval"))
-	//} else {
-	//	fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
-	//	os.Exit(1)
-	//}
-
-	//if viper.GetString("alert") != foundSnitch.AlertType {
-	//	fmt.Println(foundSnitch.AlertType, "->", viper.GetString("alert"))
-	//	if checkAlertType(viper.GetString("alert")) {
-	//		newsnitch.AlertType = strings.ToLower(viper.GetString("alert"))
-	//	} else {
-	//		fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
-	//		os.Exit(1)
-	//	}
-	//}
-	//======
-
 	// check if existing snitch exists
 	if !existSnitch(newsnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
 		fmt.Println("creating snitch")
-		//============
 		if actionSnitch(string(jsonsnitch), "POST", "application/json") {
 			fmt.Println("Successfully created snitch")
 		} else {
 			fmt.Println("ERROR: Cannot create snitch", newsnitch.Name)
 		}
-		//===========
-
 	}
 
 }
