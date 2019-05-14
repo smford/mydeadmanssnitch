@@ -22,15 +22,15 @@ import (
 
 type oneSnitch struct {
 	Token       string    `json:"token"`
-	Href        string    `json:"href"`
-	Name        string    `json:"name"`
-	Tags        []string  `json:"tags"`
+	Href        string    `json:"href,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
 	Notes       string    `json:"notes,omitempty"`
-	Status      string    `json:"status"`
-	CheckedInAt time.Time `json:"checked_in_at"`
-	CreatedAt   time.Time `json:"created_at"`
-	Interval    string    `json:"interval"`
-	AlertType   string    `json:"alert_type"`
+	Status      string    `json:"status,omitempty"`
+	CheckedInAt time.Time `json:"checked_in_at,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	Interval    string    `json:"interval,omitempty"`
+	AlertType   string    `json:"alert_type,omitempty"`
 }
 
 type newSnitch struct {
@@ -41,12 +41,20 @@ type newSnitch struct {
 	Tags      []string `json:"tags"`
 }
 
+type udSnitch struct {
+	Name      string   `json:"name,omitempty"`
+	AlertType string   `json:"alert_type,omitempty"`
+	Interval  string   `json:"interval,omitempty"`
+	Notes     string   `json:"notes,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
+}
+
 type dmsResp struct {
 	Type  string `json:"type"`
 	Error string `json:"error"`
 }
 
-const appversion = 0.01
+const appversion = 0.02
 
 var (
 	apikey        string
@@ -79,6 +87,7 @@ func init() {
 	flag.String("snitch", "", "Snitch to use")
 	flag.String("tags", "", "Tags")
 	flag.String("unpause", "", "Unpause a snitch")
+	flag.String("update", "", "Update a snitch")
 	flag.Bool("verbose", false, "Increase verbosity")
 	flag.Bool("version", false, "Version")
 
@@ -140,13 +149,30 @@ func main() {
 		os.Exit(0)
 	}
 
+	if viper.GetString("update") != "" {
+		fmt.Println("Updating snitch")
+		updateSnitch(viper.GetString("update"))
+		os.Exit(0)
+	}
+
 	if viper.GetBool("create") {
 
 		var mytags []string
 
 		mytags = append(mytags, strings.Split(viper.GetString("tags"), ",")...)
 
-		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
+		//newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
+		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: strings.ToLower(viper.GetString("interval")), AlertType: strings.ToLower(viper.GetString("alert")), Notes: viper.GetString("notes"), Tags: mytags}
+
+		if !checkAlertType(newsnitch.AlertType) {
+			fmt.Println("ERROR: Invalid Alert Type", newsnitch.AlertType, ". Please choose either \"basic\" or \"smart\"")
+			os.Exit(1)
+		}
+
+		if !checkInterval(newsnitch.Interval) {
+			fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+			os.Exit(1)
+		}
 
 		createSnitch(newsnitch)
 		os.Exit(0)
@@ -410,6 +436,8 @@ func createSnitch(newsnitch newSnitch) {
 
 	{
 		fmt.Println("checking snitch")
+
+		// update validation checks here
 		switch newsnitch.Interval {
 		case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
 			fmt.Println("valid interval:", newsnitch.Interval)
@@ -461,6 +489,118 @@ func deleteSnitch(snitchid string) {
 func existSnitch(snitch newSnitch) bool {
 	fmt.Println("checking existence of snitch:", snitch.Name)
 	return true
+}
+
+func updateSnitch(snitchtoken string) {
+	fmt.Println("updateSnitch function running:", snitchtoken)
+
+	if len(apikey) == 0 {
+		fmt.Println("ERROR: No API Key provided")
+		os.Exit(1)
+	}
+
+	snitchtoken = url.QueryEscape(snitchtoken)
+	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", snitchtoken)
+
+	req, err := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth(apikey, "")
+	if err != nil {
+		log.Fatal("NewRequest: ", err)
+		return
+	}
+
+	client := &http.Client{}
+	client.Timeout = time.Second * 15
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Do: ", err)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	var foundSnitch oneSnitch
+	if err := json.NewDecoder(resp.Body).Decode(&foundSnitch); err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println("SINGLE SNITCH FOUND:", foundSnitch)
+
+	var updatesnitch udSnitch
+
+	if viper.GetString("name") != foundSnitch.Name {
+		fmt.Println(foundSnitch.Name, "->", viper.GetString("name"))
+		updatesnitch.Name = viper.GetString("name")
+	}
+
+	//if viper.GetString("notes") != foundSnitch.Notes {
+	//	fmt.Println(foundSnitch.Notes, "->", viper.GetString("notes"))
+	//	newSnitch.Notes = viper.GetString("notes")
+	//}
+
+	if viper.GetString("notes") != foundSnitch.Notes {
+		fmt.Println(foundSnitch.Notes, "->", viper.GetString("notes"))
+		updatesnitch.Notes = viper.GetString("notes")
+	}
+
+	if viper.GetString("interval") != foundSnitch.Interval {
+		fmt.Println(foundSnitch.Interval, "->", viper.GetString("interval"))
+
+		if checkInterval(viper.GetString("interval")) {
+			updatesnitch.Interval = viper.GetString("interval")
+		} else {
+			fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+			os.Exit(1)
+		}
+	}
+
+	if viper.GetString("alert") != foundSnitch.AlertType {
+		fmt.Println(foundSnitch.AlertType, "->", viper.GetString("alert"))
+		if checkAlertType(viper.GetString("alert")) {
+			updatesnitch.AlertType = strings.ToLower(viper.GetString("alert"))
+		} else {
+			fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
+			os.Exit(1)
+		}
+	}
+
+	jsonudsnitch, err := json.Marshal(updatesnitch)
+
+	if err != nil {
+		fmt.Println("ERROR: Cannot convert to json")
+		os.Exit(1)
+	}
+
+	fmt.Println("OLD:", foundSnitch)
+	fmt.Println("NEW:", updatesnitch)
+	fmt.Println("NEW JSON:", jsonudsnitch)
+	os.Exit(0)
+
+	// generate update json
+	// actionSnitch(generated json)
+}
+
+func checkAlertType(alerttype string) bool {
+	switch strings.ToLower(alerttype) {
+	case "basic", "smart":
+		fmt.Println("valid alert type:", alerttype)
+		return true
+	default:
+		fmt.Println("invalid alert type:", alerttype)
+		return false
+	}
+}
+
+func checkInterval(interval string) bool {
+	switch strings.ToLower(interval) {
+	case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
+		fmt.Println("valid interval:", interval)
+		return true
+	default:
+		fmt.Println("invalid interval:", interval)
+		return false
+	}
 }
 
 func displayHelp() {
