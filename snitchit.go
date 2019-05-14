@@ -133,6 +133,25 @@ func init() {
 		snitch = viper.GetString("snitch")
 	}
 
+	if viper.GetString("alert") != "" {
+		if !checkAlertType(strings.ToLower(viper.GetString("alert"))) {
+			fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("init: alert check")
+	}
+
+	if viper.GetString("interval") != "" {
+		if !checkInterval(strings.ToLower(viper.GetString("interval"))) {
+			fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+			os.Exit(1)
+		} else {
+			fmt.Println("init: interval check")
+		}
+
+	}
+
 	apikey = viper.GetString("apikey")
 	silent = viper.GetBool("silent")
 
@@ -164,15 +183,15 @@ func main() {
 		//newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
 		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: strings.ToLower(viper.GetString("interval")), AlertType: strings.ToLower(viper.GetString("alert")), Notes: viper.GetString("notes"), Tags: mytags}
 
-		if !checkAlertType(newsnitch.AlertType) {
-			fmt.Println("ERROR: Invalid Alert Type", newsnitch.AlertType, ". Please choose either \"basic\" or \"smart\"")
-			os.Exit(1)
-		}
+		//if !checkAlertType(newsnitch.AlertType) {
+		//	fmt.Println("ERROR: Invalid Alert Type", newsnitch.AlertType, ". Please choose either \"basic\" or \"smart\"")
+		//	os.Exit(1)
+		//}
 
-		if !checkInterval(newsnitch.Interval) {
-			fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
-			os.Exit(1)
-		}
+		//if !checkInterval(newsnitch.Interval) {
+		//	fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+		//	os.Exit(1)
+		//}
 
 		createSnitch(newsnitch)
 		os.Exit(0)
@@ -431,27 +450,28 @@ func createSnitch(newsnitch newSnitch) {
 		os.Exit(1)
 	}
 
-	newsnitch.Interval = strings.ToLower(newsnitch.Interval)
-	newsnitch.AlertType = strings.ToLower(newsnitch.AlertType)
+	newsnitch.Interval = strings.ToLower(viper.GetString("interval"))
+	newsnitch.AlertType = strings.ToLower(viper.GetString("alert"))
 
-	{
-		fmt.Println("checking snitch")
+	//======
+	// validation now occuring in func init
+	//if checkInterval(viper.GetString("interval")) {
+	//	newsnitch.Interval = strings.ToLower(viper.GetString("interval"))
+	//} else {
+	//	fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+	//	os.Exit(1)
+	//}
 
-		// update validation checks here
-		switch newsnitch.Interval {
-		case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
-			fmt.Println("valid interval:", newsnitch.Interval)
-		default:
-			fmt.Println("invalid interval:", newsnitch.Interval)
-		}
-
-		switch newsnitch.AlertType {
-		case "basic", "smart":
-			fmt.Println("valid alert type:", newsnitch.AlertType)
-		default:
-			fmt.Println("invalid alert type:", newsnitch.AlertType)
-		}
-	}
+	//if viper.GetString("alert") != foundSnitch.AlertType {
+	//	fmt.Println(foundSnitch.AlertType, "->", viper.GetString("alert"))
+	//	if checkAlertType(viper.GetString("alert")) {
+	//		newsnitch.AlertType = strings.ToLower(viper.GetString("alert"))
+	//	} else {
+	//		fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
+	//		os.Exit(1)
+	//	}
+	//}
+	//======
 
 	// check if existing snitch exists
 	if !existSnitch(newsnitch) {
