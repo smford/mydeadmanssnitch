@@ -318,7 +318,7 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	if actionSnitch(snitch+"/pause", "POST", "") {
+	if actionSnitch("/pause", "POST", "", snitch) {
 		fmt.Println("Successfully paused", snitch)
 	} else {
 		fmt.Println("ERROR: Cannot pause snitch", snitch)
@@ -330,7 +330,7 @@ func unpauseSnitch(snitch string) {
 	sendSnitch(snitch)
 }
 
-func actionSnitch(action string, httpaction string, customheader string) bool {
+func actionSnitch(action string, httpaction string, customheader string, snitchid string) bool {
 
 	if len(apikey) == 0 {
 		fmt.Println("ERROR: No API Key provided")
@@ -355,7 +355,10 @@ func actionSnitch(action string, httpaction string, customheader string) bool {
 		switch {
 		case strings.ToLower(httpaction) == "delete":
 			fmt.Println("Changing action to delete")
-			url = url + "/" + action
+			url = url + "/" + snitchid
+		case strings.ToLower(httpaction) == "patch":
+			fmt.Println("Changing action to patch")
+			url = url + "/" + snitchid
 		default:
 			fmt.Println("Some default")
 		}
@@ -447,7 +450,7 @@ func createSnitch(newsnitch newSnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
 		fmt.Println("creating snitch")
-		if actionSnitch(string(jsonsnitch), "POST", "application/json") {
+		if actionSnitch(string(jsonsnitch), "POST", "application/json", "") {
 			fmt.Println("Successfully created snitch")
 		} else {
 			fmt.Println("ERROR: Cannot create snitch", newsnitch.Name)
@@ -462,7 +465,7 @@ func deleteSnitch(snitchid string) {
 	//if existSnitch(delsnitch) {
 	if true {
 		fmt.Println("Deleting snitch:", snitchid)
-		if actionSnitch(snitchid, "DELETE", "") {
+		if actionSnitch("", "DELETE", "", snitchid) {
 			fmt.Println("Successfully deleted snitch", snitchid)
 		} else {
 			fmt.Println("ERROR: Cannot delete snitch", snitchid)
@@ -563,6 +566,7 @@ func updateSnitch(snitchtoken string) {
 		}
 	}
 
+	// generate update json
 	jsonudsnitch, err := json.Marshal(updatesnitch)
 
 	if err != nil {
@@ -572,11 +576,15 @@ func updateSnitch(snitchtoken string) {
 
 	fmt.Println("OLD:", foundSnitch)
 	fmt.Println("NEW:", updatesnitch)
-	fmt.Println("NEW JSON:", jsonudsnitch)
-	os.Exit(0)
+	fmt.Println("NEW JSON:", string(jsonudsnitch))
 
-	// generate update json
-	// actionSnitch(generated json)
+	if actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken) {
+		fmt.Println("Successfully updated snitch")
+		os.Exit(0)
+	} else {
+		fmt.Println("ERROR: Cannot update snitch", snitchtoken)
+		os.Exit(1)
+	}
 }
 
 func checkAlertType(alerttype string) bool {
