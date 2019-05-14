@@ -3,8 +3,9 @@
 A simple command line tool that can be used to:
 - raise snitches (check in) to [Deadmanssnitch.com](https://deadmanssnitch.com)
 - create a snitch
-- delete a snitch
+- read a snitch
 - update a snitch
+- delete a snitch
 - list snitches
 - check status of snitches
 - pause and unpause snitches
