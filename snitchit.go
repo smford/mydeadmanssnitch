@@ -144,7 +144,7 @@ func init() {
 
 	if viper.GetString("interval") != "" {
 		if !checkInterval(strings.ToLower(viper.GetString("interval"))) {
-			fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+			fmt.Println("ERROR: 147 Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
 			os.Exit(1)
 		} else {
 			fmt.Println("init: interval check")
@@ -545,16 +545,26 @@ func updateSnitch(snitchtoken string) {
 		updatesnitch.Notes = viper.GetString("notes")
 	}
 
-	if viper.GetString("interval") != foundSnitch.Interval {
-		fmt.Println(foundSnitch.Interval, "->", viper.GetString("interval"))
+	//============
 
-		if checkInterval(viper.GetString("interval")) {
-			updatesnitch.Interval = viper.GetString("interval")
+	if viper.GetString("interval") == "" {
+		updatesnitch.Interval = foundSnitch.Interval
+	} else {
+		if viper.GetString("interval") != foundSnitch.Interval {
+			fmt.Println(foundSnitch.Interval, "->", viper.GetString("interval"))
+
+			if checkInterval(viper.GetString("interval")) {
+				updatesnitch.Interval = viper.GetString("interval")
+			} else {
+				fmt.Println("ERROR: 554 Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+				os.Exit(1)
+			}
 		} else {
-			fmt.Println("ERROR: Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
-			os.Exit(1)
+			// no change to interval
+			updatesnitch.Interval = foundSnitch.Interval
 		}
 	}
+	//=============
 
 	if viper.GetString("alert") != foundSnitch.AlertType {
 		fmt.Println(foundSnitch.AlertType, "->", viper.GetString("alert"))
