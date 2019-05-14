@@ -545,6 +545,11 @@ func updateSnitch(snitchtoken string) {
 		log.Println(err)
 	}
 
+	if foundSnitch.Token != snitchtoken {
+		fmt.Println("ERROR: No snitch found matching:", snitchtoken)
+		os.Exit(1)
+	}
+
 	fmt.Println("SINGLE SNITCH FOUND:", foundSnitch)
 
 	var updatesnitch udSnitch
