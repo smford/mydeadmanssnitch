@@ -73,7 +73,6 @@ func init() {
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
 	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
-	flag.Bool("debug", false, "Enable debug mode")
 	flag.String("delete", "", "Delete a snitch")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
@@ -342,14 +341,7 @@ func actionSnitch(action string, httpaction string, customheader string, snitchi
 	fmt.Println("running action:", action, " ", httpaction)
 	snitch = url.QueryEscape(snitch)
 
-	url := ""
-
-	if !viper.GetBool("debug") {
-		url = "https://api.deadmanssnitch.com/v1/snitches"
-	} else {
-		// nc -l 127.0.0.1 8888
-		url = "http://localhost:8888/v1/snitches"
-	}
+	url = "https://api.deadmanssnitch.com/v1/snitches"
 
 	if len(httpaction) == 0 {
 		url = url + "/" + action
@@ -651,7 +643,6 @@ snitchit
   --apikey [api key]                 Deadmanssnitch.com API key
   --config [config file]             Configuration file, default = config.yaml
   --create                           Create snitch, requires --name and --interval, optional --tags & --notes
-  --debug                            Enable debug mode
   --displayconfig                    Display configuration
   --help                             Display help
   --interval [interval window]       "15_minute", "30_minute", "hourly", "daily", "weekly", or "monthly"
