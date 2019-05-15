@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"io/ioutil"
@@ -22,15 +23,15 @@ import (
 
 type oneSnitch struct {
 	Token       string    `json:"token"`
-	Href        string    `json:"href"`
-	Name        string    `json:"name"`
-	Tags        []string  `json:"tags"`
+	Href        string    `json:"href,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
 	Notes       string    `json:"notes,omitempty"`
-	Status      string    `json:"status"`
-	CheckedInAt time.Time `json:"checked_in_at"`
-	CreatedAt   time.Time `json:"created_at"`
-	Interval    string    `json:"interval"`
-	AlertType   string    `json:"alert_type"`
+	Status      string    `json:"status,omitempty"`
+	CheckedInAt time.Time `json:"checked_in_at,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	Interval    string    `json:"interval,omitempty"`
+	AlertType   string    `json:"alert_type,omitempty"`
 }
 
 type newSnitch struct {
@@ -41,12 +42,20 @@ type newSnitch struct {
 	Tags      []string `json:"tags"`
 }
 
+type udSnitch struct {
+	Name      string   `json:"name,omitempty"`
+	AlertType string   `json:"alert_type,omitempty"`
+	Interval  string   `json:"interval,omitempty"`
+	Notes     string   `json:"notes,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
+}
+
 type dmsResp struct {
 	Type  string `json:"type"`
 	Error string `json:"error"`
 }
 
-const appversion = 0.01
+const appversion = 0.02
 
 var (
 	apikey        string
@@ -77,8 +86,9 @@ func init() {
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.Bool("silent", false, "Be silent")
 	flag.String("snitch", "", "Snitch to use")
-	flag.String("tags", "", "Tags")
+	flag.String("tags", "", "Tags separated by commas, \"tag1,tag2,tag3\"")
 	flag.String("unpause", "", "Unpause a snitch")
+	flag.String("update", "", "Update a snitch, can be used with --name, --interval, --tags & --notes")
 	flag.Bool("verbose", false, "Increase verbosity")
 	flag.Bool("version", false, "Version")
 
@@ -107,7 +117,6 @@ func init() {
 	}
 
 	config := strings.TrimSuffix(*configFile, ".yaml")
-	// fmt.Printf("Loading: %s/%s\n", *configPath, *configFile)
 
 	viper.SetConfigName(config)
 	err := viper.ReadInConfig()
@@ -122,6 +131,25 @@ func init() {
 		snitch = viper.GetString("defaultsnitch")
 	} else {
 		snitch = viper.GetString("snitch")
+	}
+
+	if viper.GetString("alert") != "" {
+		if !checkAlertType(strings.ToLower(viper.GetString("alert"))) {
+			fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("init: alert check")
+	}
+
+	if viper.GetString("interval") != "" {
+		if !checkInterval(strings.ToLower(viper.GetString("interval"))) {
+			fmt.Println("ERROR: 147 Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+			os.Exit(1)
+		} else {
+			fmt.Println("init: interval check")
+		}
+
 	}
 
 	apikey = viper.GetString("apikey")
@@ -140,13 +168,19 @@ func main() {
 		os.Exit(0)
 	}
 
+	if viper.GetString("update") != "" {
+		fmt.Println("Updating snitch")
+		updateSnitch(viper.GetString("update"))
+		os.Exit(0)
+	}
+
 	if viper.GetBool("create") {
 
 		var mytags []string
 
 		mytags = append(mytags, strings.Split(viper.GetString("tags"), ",")...)
 
-		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: viper.GetString("interval"), AlertType: viper.GetString("alert"), Notes: viper.GetString("notes"), Tags: mytags}
+		newsnitch := newSnitch{Name: viper.GetString("name"), Interval: strings.ToLower(viper.GetString("interval")), AlertType: strings.ToLower(viper.GetString("alert")), Notes: viper.GetString("notes"), Tags: mytags}
 
 		createSnitch(newsnitch)
 		os.Exit(0)
@@ -284,7 +318,7 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	if actionSnitch(snitch+"/pause", "POST", "") {
+	if actionSnitch("/pause", "POST", "", snitch) {
 		fmt.Println("Successfully paused", snitch)
 	} else {
 		fmt.Println("ERROR: Cannot pause snitch", snitch)
@@ -296,7 +330,7 @@ func unpauseSnitch(snitch string) {
 	sendSnitch(snitch)
 }
 
-func actionSnitch(action string, httpaction string, customheader string) bool {
+func actionSnitch(action string, httpaction string, customheader string, snitchid string) bool {
 
 	if len(apikey) == 0 {
 		fmt.Println("ERROR: No API Key provided")
@@ -321,7 +355,10 @@ func actionSnitch(action string, httpaction string, customheader string) bool {
 		switch {
 		case strings.ToLower(httpaction) == "delete":
 			fmt.Println("Changing action to delete")
-			url = url + "/" + action
+			url = url + "/" + snitchid
+		case strings.ToLower(httpaction) == "patch":
+			fmt.Println("Changing action to patch")
+			url = url + "/" + snitchid
 		default:
 			fmt.Println("Some default")
 		}
@@ -405,39 +442,19 @@ func createSnitch(newsnitch newSnitch) {
 		os.Exit(1)
 	}
 
-	newsnitch.Interval = strings.ToLower(newsnitch.Interval)
-	newsnitch.AlertType = strings.ToLower(newsnitch.AlertType)
-
-	{
-		fmt.Println("checking snitch")
-		switch newsnitch.Interval {
-		case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
-			fmt.Println("valid interval:", newsnitch.Interval)
-		default:
-			fmt.Println("invalid interval:", newsnitch.Interval)
-		}
-
-		switch newsnitch.AlertType {
-		case "basic", "smart":
-			fmt.Println("valid alert type:", newsnitch.AlertType)
-		default:
-			fmt.Println("invalid alert type:", newsnitch.AlertType)
-		}
-	}
+	newsnitch.Interval = strings.ToLower(viper.GetString("interval"))
+	newsnitch.AlertType = strings.ToLower(viper.GetString("alert"))
 
 	// check if existing snitch exists
 	if !existSnitch(newsnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
 		fmt.Println("creating snitch")
-		//============
-		if actionSnitch(string(jsonsnitch), "POST", "application/json") {
+		if actionSnitch(string(jsonsnitch), "POST", "application/json", "") {
 			fmt.Println("Successfully created snitch")
 		} else {
 			fmt.Println("ERROR: Cannot create snitch", newsnitch.Name)
 		}
-		//===========
-
 	}
 
 }
@@ -448,7 +465,7 @@ func deleteSnitch(snitchid string) {
 	//if existSnitch(delsnitch) {
 	if true {
 		fmt.Println("Deleting snitch:", snitchid)
-		if actionSnitch(snitchid, "DELETE", "") {
+		if actionSnitch("", "DELETE", "", snitchid) {
 			fmt.Println("Successfully deleted snitch", snitchid)
 		} else {
 			fmt.Println("ERROR: Cannot delete snitch", snitchid)
@@ -461,6 +478,147 @@ func deleteSnitch(snitchid string) {
 func existSnitch(snitch newSnitch) bool {
 	fmt.Println("checking existence of snitch:", snitch.Name)
 	return true
+}
+
+func updateSnitch(snitchtoken string) {
+	fmt.Println("updateSnitch function running:", snitchtoken)
+
+	if len(apikey) == 0 {
+		fmt.Println("ERROR: No API Key provided")
+		os.Exit(1)
+	}
+
+	snitchtoken = url.QueryEscape(snitchtoken)
+	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", snitchtoken)
+
+	req, err := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth(apikey, "")
+	if err != nil {
+		log.Fatal("NewRequest: ", err)
+		return
+	}
+
+	client := &http.Client{}
+	client.Timeout = time.Second * 15
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Do: ", err)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	var foundSnitch oneSnitch
+	if err := json.NewDecoder(resp.Body).Decode(&foundSnitch); err != nil {
+		log.Println(err)
+	}
+
+	if foundSnitch.Token != snitchtoken {
+		fmt.Println("ERROR: No snitch found matching:", snitchtoken)
+		os.Exit(1)
+	}
+
+	fmt.Println("SINGLE SNITCH FOUND:", foundSnitch)
+
+	var updatesnitch udSnitch
+
+	if viper.GetString("name") != foundSnitch.Name {
+		fmt.Println(foundSnitch.Name, "->", viper.GetString("name"))
+		updatesnitch.Name = viper.GetString("name")
+	}
+
+	//=============
+	var newtags []string
+	newtags = append(newtags, strings.Split(viper.GetString("tags"), ",")...)
+
+	if !cmp.Equal(foundSnitch.Tags, newtags) {
+		fmt.Println(foundSnitch.Tags, "->", newtags)
+		updatesnitch.Tags = newtags
+	}
+	//=============
+
+	fmt.Println("COMPARING TAGS:", cmp.Equal(foundSnitch.Tags, newtags))
+
+	if viper.GetString("notes") != foundSnitch.Notes {
+		fmt.Println(foundSnitch.Notes, "->", viper.GetString("notes"))
+		updatesnitch.Notes = viper.GetString("notes")
+	}
+
+	//============
+
+	if viper.GetString("interval") == "" {
+		updatesnitch.Interval = foundSnitch.Interval
+	} else {
+		if viper.GetString("interval") != foundSnitch.Interval {
+			fmt.Println(foundSnitch.Interval, "->", viper.GetString("interval"))
+
+			if checkInterval(viper.GetString("interval")) {
+				updatesnitch.Interval = viper.GetString("interval")
+			} else {
+				fmt.Println("ERROR: 554 Invalid Interval", strings.ToLower(viper.GetString("interval")), ". Please choose either \"15_minute\", \"30_minute\", \"hourly\", \"daily\", \"weekly\", or \"monthly\"")
+				os.Exit(1)
+			}
+		} else {
+			// no change to interval
+			updatesnitch.Interval = foundSnitch.Interval
+		}
+	}
+	//=============
+
+	if viper.GetString("alert") != foundSnitch.AlertType {
+		fmt.Println(foundSnitch.AlertType, "->", viper.GetString("alert"))
+		if checkAlertType(viper.GetString("alert")) {
+			updatesnitch.AlertType = strings.ToLower(viper.GetString("alert"))
+		} else {
+			fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
+			os.Exit(1)
+		}
+	} else {
+		updatesnitch.AlertType = foundSnitch.AlertType
+	}
+
+	// generate update json
+	jsonudsnitch, err := json.Marshal(updatesnitch)
+
+	if err != nil {
+		fmt.Println("ERROR: Cannot convert to json")
+		os.Exit(1)
+	}
+
+	fmt.Println("OLD:", foundSnitch)
+	fmt.Println("NEW:", updatesnitch)
+	fmt.Println("NEW JSON:", string(jsonudsnitch))
+
+	if actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken) {
+		fmt.Println("Successfully updated snitch")
+		os.Exit(0)
+	} else {
+		fmt.Println("ERROR: Cannot update snitch", snitchtoken)
+		os.Exit(1)
+	}
+}
+
+func checkAlertType(alerttype string) bool {
+	switch strings.ToLower(alerttype) {
+	case "basic", "smart":
+		fmt.Println("valid alert type:", alerttype)
+		return true
+	default:
+		fmt.Println("invalid alert type:", alerttype)
+		return false
+	}
+}
+
+func checkInterval(interval string) bool {
+	switch strings.ToLower(interval) {
+	case "15_minute", "30_minute", "hourly", "daily", "weekly", "monthly":
+		fmt.Println("valid interval:", interval)
+		return true
+	default:
+		fmt.Println("invalid interval:", interval)
+		return false
+	}
 }
 
 func displayHelp() {
@@ -484,7 +642,9 @@ snitchit
   --show --snitch [snitch]           Show details for a specific snitch
   --silent                           Be silent
   --snitch [snitch]                  Snitch to use, default = defaultsnitch from config.yaml
+  --tags [tags]                      Tags separated by commas, "tag1,tag2,tag3"
   --unpause [snitch]                 Unpause a snitch
+  --update [snitch]                  Update a snitch, can be used with --name, --interval, --tags & --notes
   --verbose                          Increase verbosity
   --version                          Version
 `
