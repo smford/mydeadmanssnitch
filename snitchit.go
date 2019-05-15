@@ -83,6 +83,7 @@ func init() {
 	flag.String("notes", "", "Notes")
 	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
+	flag.String("plan", "free", "Plan type: \"free\", \"small\", \"medium\" or \"large\", default = free")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
 	flag.Bool("silent", false, "Be silent")
 	flag.String("snitch", "", "Snitch to use")
@@ -152,6 +153,11 @@ func init() {
 
 	}
 
+	if !checkPlan(viper.GetString("plan"), viper.GetString("alert"), viper.GetString("interval")) {
+		fmt.Println("ERROR: Basic Alerts are available for any snitch. Smart Alerts are available for hourly, daily, weekly, and monthly interval snitches on the Surveillance Van plan, and for monthly interval snitches on all other plans.")
+		os.Exit(1)
+	}
+
 	apikey = viper.GetString("apikey")
 	silent = viper.GetBool("silent")
 
@@ -163,6 +169,7 @@ func init() {
 }
 
 func main() {
+
 	if viper.GetBool("displayconfig") {
 		displayConfig()
 		os.Exit(0)
@@ -611,6 +618,31 @@ func checkInterval(interval string) bool {
 	}
 }
 
+func checkPlan(plan string, alert string, interval string) bool {
+	if strings.ToLower(alert) == "basic" {
+		// all plans allow basic snitches
+		return true
+	} else {
+		if strings.ToLower(plan) == "free" {
+			// free plans do not allow smart snitches
+			return false
+		}
+		if (strings.ToLower(interval) == "15_minute") || (strings.ToLower(interval) == "30_minute") {
+			return false
+		}
+		if strings.ToLower(plan) == "large" {
+			// large plans can have smart snitches for hourly, daily, weekly or monthly
+			return true
+		}
+		if strings.ToLower(interval) == "monthly" {
+			// small, medium and large allow smart snitches for monthly
+			return true
+		} else {
+			return false
+		}
+	}
+}
+
 func displayHelp() {
 	helpmessage := `
 snitchit
@@ -628,6 +660,7 @@ snitchit
   --notes [notes]                    Notes for snitch
   --path [path to config file]       Path to configuration file, default = current directory
   --pause [snitch]                   Pauses a snitch
+  --plan [plan type]                 Plan type: "free", "small", "medium" or "large", default = free
   --show                             Display all snitches
   --show --snitch [snitch]           Show details for a specific snitch
   --silent                           Be silent

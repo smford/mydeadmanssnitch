@@ -25,6 +25,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --message [message to send]        Message to send, default = "2006-01-02T15:04:05Z07:00" format
   --path [path to config file]       Path to configuration file, default = current directory
   --pause [snitch]                   Pauses a snitch
+  --plan [plan type]                 Plan type: "free", "small", "medium" or "large", default = free
   --show                             Display all snitches
   --show --snitch [snitch]           Show details for a specific snitch
   --silent                           Be silent
