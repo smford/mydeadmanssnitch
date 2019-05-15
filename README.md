@@ -41,6 +41,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
 ```
 apikey: my-api-key
 defaultsnitch: 10ffbf9437f6
+plan: free
 silent: false
 snitches:
 - 10ffbf9437f6
