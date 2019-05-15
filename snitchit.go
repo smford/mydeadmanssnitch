@@ -574,6 +574,8 @@ func updateSnitch(snitchtoken string) {
 			fmt.Println("ERROR: Invalid Alert Type", strings.ToLower(viper.GetString("alert")), ". Please choose either \"basic\" or \"smart\"")
 			os.Exit(1)
 		}
+	} else {
+		updatesnitch.AlertType = foundSnitch.AlertType
 	}
 
 	// generate update json
