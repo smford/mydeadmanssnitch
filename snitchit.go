@@ -394,7 +394,10 @@ func createSnitch(newsnitch newSnitch) {
 	fmt.Println("Creating snitch")
 
 	jsonsnitch, _ := json.Marshal(newsnitch)
-	fmt.Println(string(jsonsnitch))
+
+	if verbose {
+		fmt.Println("JSON Payload:", string(jsonsnitch))
+	}
 
 	if len(newsnitch.Name) == 0 {
 		fmt.Println("ERROR: name cannot be blank")
@@ -413,7 +416,6 @@ func createSnitch(newsnitch newSnitch) {
 	if !existSnitch(newsnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
-		fmt.Println("creating snitch")
 		if actionSnitch(string(jsonsnitch), "POST", "application/json", "") {
 			fmt.Println("Successfully created snitch")
 		} else {
@@ -440,13 +442,11 @@ func deleteSnitch(snitchid string) {
 }
 
 func existSnitch(snitch newSnitch) bool {
-	fmt.Println("checking existence of snitch:", snitch.Name)
+	fmt.Println("REFACTOR: checking existence of snitch:", snitch.Name)
 	return true
 }
 
 func updateSnitch(snitchtoken string) {
-	fmt.Println("updateSnitch function running:", snitchtoken)
-
 	snitchtoken = url.QueryEscape(snitchtoken)
 	url := fmt.Sprintf("https://api.deadmanssnitch.com/v1/snitches/%s", snitchtoken)
 
@@ -481,7 +481,9 @@ func updateSnitch(snitchtoken string) {
 	var updatesnitch udSnitch
 
 	if viper.GetString("name") != foundSnitch.Name {
-		fmt.Println(foundSnitch.Name, "->", viper.GetString("name"))
+		if verbose {
+			fmt.Println("Name:", foundSnitch.Name, "->", viper.GetString("name"))
+		}
 		updatesnitch.Name = viper.GetString("name")
 	}
 
@@ -489,12 +491,16 @@ func updateSnitch(snitchtoken string) {
 	newtags = append(newtags, strings.Split(viper.GetString("tags"), ",")...)
 
 	if !cmp.Equal(foundSnitch.Tags, newtags) {
-		fmt.Println(foundSnitch.Tags, "->", newtags)
+		if verbose {
+			fmt.Println("Tags:", foundSnitch.Tags, "->", newtags)
+		}
 		updatesnitch.Tags = newtags
 	}
 
 	if viper.GetString("notes") != foundSnitch.Notes {
-		fmt.Println(foundSnitch.Notes, "->", viper.GetString("notes"))
+		if verbose {
+			fmt.Println("Notes:", foundSnitch.Notes, "->", viper.GetString("notes"))
+		}
 		updatesnitch.Notes = viper.GetString("notes")
 	}
 
@@ -502,7 +508,9 @@ func updateSnitch(snitchtoken string) {
 		updatesnitch.Interval = foundSnitch.Interval
 	} else {
 		if viper.GetString("interval") != foundSnitch.Interval {
-			fmt.Println(foundSnitch.Interval, "->", viper.GetString("interval"))
+			if verbose {
+				fmt.Println("Interval:", foundSnitch.Interval, "->", viper.GetString("interval"))
+			}
 
 			if checkInterval(viper.GetString("interval")) {
 				updatesnitch.Interval = viper.GetString("interval")
@@ -517,7 +525,9 @@ func updateSnitch(snitchtoken string) {
 	}
 
 	if viper.GetString("alert") != foundSnitch.AlertType {
-		fmt.Println(foundSnitch.AlertType, "->", viper.GetString("alert"))
+		if verbose {
+			fmt.Println("Alert:", foundSnitch.AlertType, "->", viper.GetString("alert"))
+		}
 		if checkAlertType(viper.GetString("alert")) {
 			updatesnitch.AlertType = strings.ToLower(viper.GetString("alert"))
 		} else {
