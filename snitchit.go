@@ -241,7 +241,7 @@ func sendSnitch(sendsnitch string) {
 	client := &http.Client{}
 	client.Timeout = time.Second * 15
 	sendsnitch = url.QueryEscape(sendsnitch)
-	if !silent {
+	if !silent || verbose {
 		fmt.Printf("Snitch: https://nosnch.in/%s\n", sendsnitch)
 	}
 	uri := fmt.Sprintf("https://nosnch.in/%s", sendsnitch)
@@ -258,9 +258,17 @@ func sendSnitch(sendsnitch string) {
 	if err != nil {
 		log.Fatalf("ioutil.ReadAll() failed with '%s'\n", err)
 	}
-	if !silent {
-		fmt.Printf("Response: %s\n", snitchresponse)
+
+	if verbose {
+		fmt.Println("Response Code:", resp.StatusCode, "Response Text:", http.StatusText(resp.StatusCode), "Message:", snitchresponse)
 	}
+
+	if !silent {
+		if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+			fmt.Println("Success")
+		}
+	}
+
 }
 
 func displaySnitch(snitch string) {
@@ -280,7 +288,7 @@ func displaySnitch(snitch string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("Do: ", err)
+		log.Fatal(err)
 		return
 	}
 
