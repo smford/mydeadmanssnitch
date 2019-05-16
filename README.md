@@ -32,7 +32,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --tags [tags]                      Tags separated by commas, "tag1,tag2,tag3"
   --unpause [snitch]                 Unpause a snitch
   --update [snitch]                  Update a snitch, can be used with --name, --interval, --tags & --notes
-  --verbose                          Increase verbosity
+  --verbose                          Be verbose
   --version                          Version
 ```
 
