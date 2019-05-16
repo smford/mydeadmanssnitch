@@ -241,7 +241,7 @@ func sendSnitch(sendsnitch string) {
 	client := &http.Client{}
 	client.Timeout = time.Second * 15
 	sendsnitch = url.QueryEscape(sendsnitch)
-	if !silent || verbose {
+	if verbose {
 		fmt.Printf("Snitch: https://nosnch.in/%s\n", sendsnitch)
 	}
 	uri := fmt.Sprintf("https://nosnch.in/%s", sendsnitch)
