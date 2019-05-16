@@ -331,7 +331,8 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	if actionSnitch("/pause", "POST", "", snitch) {
+	// if actionSnitch("/pause", "POST", "", snitch) {
+	if actionSnitch2("pause", snitch, "") {
 		fmt.Println("Successfully paused", snitch)
 	} else {
 		fmt.Println("ERROR: Cannot pause snitch", snitch)
@@ -346,22 +347,19 @@ func unpauseSnitch(snitch string) {
 func actionSnitch(action string, httpaction string, customheader string, snitchid string) bool {
 
 	snitch = url.QueryEscape(snitch)
-
 	url := "https://api.deadmanssnitch.com/v1/snitches"
-
-	if len(httpaction) == 0 {
+	fmt.Println("httpaction=", httpaction)
+	switch strings.ToLower(httpaction) {
+	case "delete", "patch":
+		url = url + "/" + snitchid
+	case "post":
+		url = url + "/"
+	default:
+		// maybe throw an error if not http action provided rather than have a fall back
 		url = url + "/" + action
-	} else {
-		switch {
-		case strings.ToLower(httpaction) == "delete":
-			url = url + "/" + snitchid
-		case strings.ToLower(httpaction) == "patch":
-			url = url + "/" + snitchid
-		}
 	}
 
 	bytesaction := []byte(action)
-
 	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
@@ -377,7 +375,6 @@ func actionSnitch(action string, httpaction string, customheader string, snitchi
 	client.Timeout = time.Second * 15
 
 	resp, err := client.Do(req)
-
 	htmlData, _ := ioutil.ReadAll(resp.Body)
 
 	if verbose {
@@ -424,7 +421,10 @@ func createSnitch(newsnitch newSnitch) {
 	if !existSnitch(newsnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
-		if actionSnitch(string(jsonsnitch), "POST", "application/json", "") {
+		fmt.Println("****outer jsonsnitch:", jsonsnitch)
+		//if actionSnitch(string(jsonsnitch), "POST", "application/json", "") {
+		if actionSnitch2("create", "", string(jsonsnitch)) { // error here
+			fmt.Println("****inner jsonsnitch:", string(jsonsnitch))
 			fmt.Println("Successfully created snitch")
 		} else {
 			fmt.Println("ERROR: Cannot create snitch", newsnitch.Name)
@@ -439,7 +439,8 @@ func deleteSnitch(snitchid string) {
 	//if existSnitch(delsnitch) {
 	if true {
 		fmt.Println("Deleting snitch:", snitchid)
-		if actionSnitch("", "DELETE", "", snitchid) {
+		// if actionSnitch("", "DELETE", "", snitchid) {
+		if actionSnitch2("delete", snitchid, "") {
 			fmt.Println("Successfully deleted snitch", snitchid)
 		} else {
 			fmt.Println("ERROR: Cannot delete snitch", snitchid)
@@ -559,7 +560,8 @@ func updateSnitch(snitchtoken string) {
 		fmt.Println("    New Snitch:", updatesnitch)
 	}
 
-	if actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken) {
+	//if actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken) {
+	if actionSnitch2("update", snitchtoken, string(jsonudsnitch)) {
 		fmt.Println("Successfully updated snitch")
 		os.Exit(0)
 	} else {
@@ -639,4 +641,79 @@ snitchit
   --version                          Version
 `
 	fmt.Printf("%s", helpmessage)
+}
+
+//======================================
+
+func actionSnitch2(todo string, token string, jsonpayload string) bool {
+	token = url.QueryEscape(token)
+	url := "https://api.deadmanssnitch.com/v1/snitches"
+
+	var httpaction string
+	var header string
+
+	fmt.Println("jsonstring:", jsonpayload)
+	//fmt.Println("  jsonbyte:", []byte(jsonpayload))
+
+	//----------
+	switch strings.ToLower(todo) {
+	case "create":
+		httpaction = "POST"
+		header = "Content-Type: application/json"
+	case "read":
+		httpaction = "POST"
+	case "update":
+		httpaction = "PATCH"
+		header = "Content-Type: application/json"
+		url = url + "/" + token
+	case "delete":
+		httpaction = "DELETE"
+		url = url + "/" + token
+	case "pause":
+		httpaction = "POST"
+		url = url + "/" + token + "/pause"
+	default:
+		fmt.Println("ERROR: todo is invalid")
+		os.Exit(1)
+	}
+	//----------
+
+	fmt.Println("Header:", header)
+	fmt.Println("   URL:", url)
+	fmt.Println("  TODO:", todo)
+
+	bytesaction := []byte(jsonpayload)
+	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
+	req.SetBasicAuth(apikey, "")
+	if err != nil {
+		log.Fatal("NewRequest: ", err)
+		return false
+	}
+
+	if len(header) != 0 {
+		req.Header.Add("Content-Type", header)
+	}
+
+	client := &http.Client{}
+	client.Timeout = time.Second * 15
+
+	resp, err := client.Do(req)
+	htmlData, _ := ioutil.ReadAll(resp.Body)
+
+	if verbose {
+		if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+			fmt.Println("Success")
+		}
+	}
+
+	if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+		var errorresponse dmsResp
+		json.Unmarshal(htmlData, &errorresponse)
+		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
+		return false
+	}
+
+	defer resp.Body.Close()
+
+	return true
 }
