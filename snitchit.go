@@ -70,6 +70,8 @@ var (
 )
 
 func init() {
+	flag.Bool("as1", true, "")
+	flag.Bool("as2", false, "")
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
@@ -499,6 +501,8 @@ func updateSnitch(snitchtoken string) {
 	var newtags []string
 	newtags = append(newtags, strings.Split(viper.GetString("tags"), ",")...)
 
+	fmt.Println("TAGS FOUND:", foundSnitch.Tags)
+
 	if !cmp.Equal(foundSnitch.Tags, newtags) {
 		if verbose {
 			fmt.Println("Tags:", foundSnitch.Tags, "->", newtags)
@@ -559,6 +563,19 @@ func updateSnitch(snitchtoken string) {
 		fmt.Println("Current Snitch:", foundSnitch)
 		fmt.Println("    New Snitch:", updatesnitch)
 	}
+
+	//============
+	//fmt.Println("========================================================")
+	//if viper.GetBool("as1") {
+	//	actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken)
+	//}
+
+	//if viper.GetBool("as2") {
+	//	fmt.Println("========================================================")
+	//	actionSnitch2("update", snitchtoken, string(jsonudsnitch))
+	//}
+	//os.Exit(1)
+	//============
 
 	//if actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken) {
 	if actionSnitch2("update", snitchtoken, string(jsonudsnitch)) {
@@ -659,12 +676,14 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	switch strings.ToLower(todo) {
 	case "create":
 		httpaction = "POST"
-		header = "Content-Type: application/json"
+		//header = "Content-Type: application/json"
+		header = "application/json"
 	case "read":
 		httpaction = "POST"
 	case "update":
 		httpaction = "PATCH"
-		header = "Content-Type: application/json"
+		//header = "Content-Type: application/json"
+		header = "application/json"
 		url = url + "/" + token
 	case "delete":
 		httpaction = "DELETE"
@@ -681,9 +700,15 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	fmt.Println("Header:", header)
 	fmt.Println("   URL:", url)
 	fmt.Println("  TODO:", todo)
+	fmt.Println("  JSON:", jsonpayload)
+	fmt.Println("Action:", httpaction)
 
 	bytesaction := []byte(jsonpayload)
 	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
+
+	fmt.Println(" BYTES:", bytesaction)
+	fmt.Printf("    CMD: req, err := http.NewRequest(%s, %s, %s)\n", httpaction, url, bytes.NewBuffer(bytesaction))
+
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
@@ -691,6 +716,7 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	}
 
 	if len(header) != 0 {
+		fmt.Println("header is not 0:", header)
 		req.Header.Add("Content-Type", header)
 	}
 
@@ -706,12 +732,12 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 		}
 	}
 
-	if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
-		var errorresponse dmsResp
-		json.Unmarshal(htmlData, &errorresponse)
-		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
-		return false
-	}
+	//if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+	var errorresponse dmsResp
+	json.Unmarshal(htmlData, &errorresponse)
+	fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
+	//return false
+	//}
 
 	defer resp.Body.Close()
 
