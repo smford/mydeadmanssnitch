@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -70,9 +71,14 @@ var (
 )
 
 func init() {
+	viper.SetEnvPrefix("SNITCHIT")
+	viper.BindEnv("config")
+	fmt.Println("env=", viper.GetString("config"))
+
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
+	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
 	flag.String("delete", "", "Delete a snitch")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -81,7 +87,6 @@ func init() {
 	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
 	flag.String("name", "", "Name of snitch")
 	flag.String("notes", "", "Notes")
-	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
 	flag.String("plan", "free", "Plan type: \"free\", \"small\", \"medium\" or \"large\", default = free")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
@@ -96,6 +101,14 @@ func init() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
+
+	fmt.Println("cli=", viper.GetString("config"))
+
+	dir, file := filepath.Split(viper.GetString("config"))
+	fmt.Println("directory=", dir)
+	fmt.Println("file=", file)
+
+	os.Exit(0)
 
 	if viper.GetBool("help") {
 		displayHelp()
