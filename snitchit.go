@@ -108,8 +108,6 @@ func init() {
 	fmt.Println("directory=", dir)
 	fmt.Println("file=", file)
 
-	os.Exit(0)
-
 	if viper.GetBool("help") {
 		displayHelp()
 		os.Exit(0)
@@ -121,7 +119,8 @@ func init() {
 	}
 
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(*configPath)
+	//viper.AddConfigPath(*configPath)
+	viper.AddConfigPath(dir)
 
 	if *tempmessage == "" {
 		message = time.Now().Format(time.RFC3339)
@@ -129,10 +128,16 @@ func init() {
 		message = *tempmessage
 	}
 
-	config := strings.TrimSuffix(*configFile, ".yaml")
+	//config := strings.TrimSuffix(*configFile, ".yaml")
+
+	config := strings.TrimSuffix(file, ".yaml")
 
 	viper.SetConfigName(config)
 	err := viper.ReadInConfig()
+
+	os.Exit(0)
+
+	fmt.Println("configPath+configFile", configPath, configFile)
 
 	if err != nil {
 		if !viper.GetBool("silent") {
