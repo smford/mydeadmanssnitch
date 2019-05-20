@@ -111,8 +111,7 @@ func init() {
 	viper.AddConfigPath(*configPath)
 
 	if *tempmessage == "" {
-		currenttime := time.Now().Format(time.RFC3339)
-		message = currenttime
+		message = time.Now().Format(time.RFC3339)
 	} else {
 		message = *tempmessage
 	}
