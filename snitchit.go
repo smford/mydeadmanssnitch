@@ -442,8 +442,6 @@ func updateSnitch(snitchtoken string) {
 	var newtags []string
 	newtags = append(newtags, strings.Split(viper.GetString("tags"), ",")...)
 
-	fmt.Println("TAGS FOUND:", foundSnitch.Tags)
-
 	if !cmp.Equal(foundSnitch.Tags, newtags) {
 		if verbose {
 			fmt.Println("Tags:", foundSnitch.Tags, "->", newtags)
@@ -480,7 +478,7 @@ func updateSnitch(snitchtoken string) {
 
 	if viper.GetString("alert") != foundSnitch.AlertType {
 		if verbose {
-			fmt.Println("Alert:", foundSnitch.AlertType, "->", viper.GetString("alert"))
+			fmt.Println("ALERT:", foundSnitch.AlertType, "->", viper.GetString("alert"))
 		}
 		if checkAlertType(viper.GetString("alert")) {
 			updatesnitch.AlertType = strings.ToLower(viper.GetString("alert"))
@@ -596,7 +594,6 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	var httpaction string
 	var header string
 
-	//----------
 	switch strings.ToLower(todo) {
 	case "create":
 		httpaction = "POST"
@@ -614,7 +611,6 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 		httpaction = "POST"
 		url = url + "/" + token + "/pause"
 	}
-	//----------
 
 	bytesaction := []byte(jsonpayload)
 	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
