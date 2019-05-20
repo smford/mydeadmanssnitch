@@ -70,8 +70,6 @@ var (
 )
 
 func init() {
-	flag.Bool("as1", true, "")
-	flag.Bool("as2", false, "")
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
 	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
@@ -319,7 +317,7 @@ func displaySnitch(snitch string) {
 	// minwidth, tabwidth, padding, padchar, flags
 	w.Init(os.Stdout, 10, 8, 4, '\t', 0)
 	defer w.Flush()
-	fmt.Fprintf(w, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Snitch", "Name", "Status", "Last CheckIn", "Interval", "Alert Type", "Notes", "Tags")
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Snitch", "Name", "Status", "Last CheckIn", "Interval", "Alert Type", "Notes", "Tags")
 
 	for _, onesnitch := range mysnitches {
 		if onesnitch.Token != "" {
@@ -333,7 +331,6 @@ func displaySnitch(snitch string) {
 
 func pauseSnitch(snitch string) {
 	fmt.Println("Pausing snitch:", snitch)
-	// if actionSnitch("/pause", "POST", "", snitch) {
 	if actionSnitch2("pause", snitch, "") {
 		fmt.Println("Successfully paused", snitch)
 	} else {
@@ -346,57 +343,6 @@ func unpauseSnitch(snitch string) {
 	sendSnitch(snitch)
 }
 
-func actionSnitch(action string, httpaction string, customheader string, snitchid string) bool {
-
-	snitch = url.QueryEscape(snitch)
-	url := "https://api.deadmanssnitch.com/v1/snitches"
-	fmt.Println("httpaction=", httpaction)
-	switch strings.ToLower(httpaction) {
-	case "delete", "patch":
-		url = url + "/" + snitchid
-	case "post":
-		url = url + "/"
-	default:
-		// maybe throw an error if not http action provided rather than have a fall back
-		url = url + "/" + action
-	}
-
-	bytesaction := []byte(action)
-	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
-	req.SetBasicAuth(apikey, "")
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return false
-	}
-
-	if len(customheader) != 0 {
-		req.Header.Add("Content-Type", customheader)
-	}
-
-	client := &http.Client{}
-	client.Timeout = time.Second * 15
-
-	resp, err := client.Do(req)
-	htmlData, _ := ioutil.ReadAll(resp.Body)
-
-	if verbose {
-		if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-			fmt.Println("Success")
-		}
-	}
-
-	if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
-		var errorresponse dmsResp
-		json.Unmarshal(htmlData, &errorresponse)
-		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
-		return false
-	}
-
-	defer resp.Body.Close()
-
-	return true
-}
-
 func createSnitch(newsnitch newSnitch) {
 	fmt.Println("Creating snitch")
 
@@ -407,12 +353,12 @@ func createSnitch(newsnitch newSnitch) {
 	}
 
 	if len(newsnitch.Name) == 0 {
-		fmt.Println("ERROR: name cannot be blank")
+		fmt.Println("ERROR: --name cannot be blank")
 		os.Exit(1)
 	}
 
 	if len(newsnitch.Interval) == 0 {
-		fmt.Println("ERROR: interval cannot be blank")
+		fmt.Println("ERROR: --interval cannot be blank")
 		os.Exit(1)
 	}
 
@@ -423,10 +369,7 @@ func createSnitch(newsnitch newSnitch) {
 	if !existSnitch(newsnitch) {
 		fmt.Printf("Snitch %s already exists\n")
 	} else {
-		fmt.Println("****outer jsonsnitch:", jsonsnitch)
-		//if actionSnitch(string(jsonsnitch), "POST", "application/json", "") {
 		if actionSnitch2("create", "", string(jsonsnitch)) { // error here
-			fmt.Println("****inner jsonsnitch:", string(jsonsnitch))
 			fmt.Println("Successfully created snitch")
 		} else {
 			fmt.Println("ERROR: Cannot create snitch", newsnitch.Name)
@@ -441,7 +384,6 @@ func deleteSnitch(snitchid string) {
 	//if existSnitch(delsnitch) {
 	if true {
 		fmt.Println("Deleting snitch:", snitchid)
-		// if actionSnitch("", "DELETE", "", snitchid) {
 		if actionSnitch2("delete", snitchid, "") {
 			fmt.Println("Successfully deleted snitch", snitchid)
 		} else {
@@ -564,20 +506,6 @@ func updateSnitch(snitchtoken string) {
 		fmt.Println("    New Snitch:", updatesnitch)
 	}
 
-	//============
-	//fmt.Println("========================================================")
-	//if viper.GetBool("as1") {
-	//	actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken)
-	//}
-
-	//if viper.GetBool("as2") {
-	//	fmt.Println("========================================================")
-	//	actionSnitch2("update", snitchtoken, string(jsonudsnitch))
-	//}
-	//os.Exit(1)
-	//============
-
-	//if actionSnitch(string(jsonudsnitch), "PATCH", "application/json", snitchtoken) {
 	if actionSnitch2("update", snitchtoken, string(jsonudsnitch)) {
 		fmt.Println("Successfully updated snitch")
 		os.Exit(0)
@@ -669,20 +597,15 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	var httpaction string
 	var header string
 
-	fmt.Println("jsonstring:", jsonpayload)
-	//fmt.Println("  jsonbyte:", []byte(jsonpayload))
-
 	//----------
 	switch strings.ToLower(todo) {
 	case "create":
 		httpaction = "POST"
-		//header = "Content-Type: application/json"
 		header = "application/json"
 	case "read":
 		httpaction = "POST"
 	case "update":
 		httpaction = "PATCH"
-		//header = "Content-Type: application/json"
 		header = "application/json"
 		url = url + "/" + token
 	case "delete":
@@ -691,23 +614,21 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	case "pause":
 		httpaction = "POST"
 		url = url + "/" + token + "/pause"
-	default:
-		fmt.Println("ERROR: todo is invalid")
-		os.Exit(1)
 	}
 	//----------
-
-	fmt.Println("Header:", header)
-	fmt.Println("   URL:", url)
-	fmt.Println("  TODO:", todo)
-	fmt.Println("  JSON:", jsonpayload)
-	fmt.Println("Action:", httpaction)
 
 	bytesaction := []byte(jsonpayload)
 	req, err := http.NewRequest(httpaction, url, bytes.NewBuffer(bytesaction))
 
-	fmt.Println(" BYTES:", bytesaction)
-	fmt.Printf("    CMD: req, err := http.NewRequest(%s, %s, %s)\n", httpaction, url, bytes.NewBuffer(bytesaction))
+	if verbose {
+		fmt.Println("HEADER:", header)
+		fmt.Println("   URL:", url)
+		fmt.Println("  TODO:", todo)
+		fmt.Println("  JSON:", jsonpayload)
+		fmt.Println("Action:", httpaction)
+		fmt.Println(" BYTES:", bytesaction)
+		fmt.Printf("    CMD: req, err := http.NewRequest(%s, %s, %s)\n", httpaction, url, bytes.NewBuffer(bytesaction))
+	}
 
 	req.SetBasicAuth(apikey, "")
 	if err != nil {
@@ -716,7 +637,6 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	}
 
 	if len(header) != 0 {
-		fmt.Println("header is not 0:", header)
 		req.Header.Add("Content-Type", header)
 	}
 
@@ -735,7 +655,9 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	//if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
 	var errorresponse dmsResp
 	json.Unmarshal(htmlData, &errorresponse)
-	fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
+	if verbose {
+		fmt.Printf("ERROR: %s/%s  MESSAGE:\"%s\"\n", http.StatusText(resp.StatusCode), errorresponse.Type, errorresponse.Error)
+	}
 	//return false
 	//}
 
