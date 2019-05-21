@@ -36,6 +36,12 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --version                          Version
 ```
 
+## Environment Variables
+
+```
+# export SNITCHIT_CONFIG="/path/to/config/file.yaml"
+```
+
 ## Configuration file
 ```
 apikey: my-api-key
@@ -47,3 +53,36 @@ snitches:
 - snitch2
 - snitch3
 ```
+
+## Installation
+
+1. Download and install latest version from master in to GOBIN path:
+
+	```
+	# go get -v github.com/smford/snitchit
+	```
+
+1. Create a configuration file
+
+	```
+	# vim /path/to/config/file.yaml
+	```
+
+1. Run!
+
+	```
+	# snitchit --config /path/to/config/file.yaml
+	```
+
+	Or
+	```
+	# export SNITCHIT_CONFIG="/path/to/config/file.yaml"
+	# snitchit
+	```
+
+	Or
+	```
+	# cd /path/to/config
+	# mv file.yaml config.yaml
+	# snitchit
+	```
