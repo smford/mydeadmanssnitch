@@ -56,7 +56,7 @@ type dmsResp struct {
 	Error string `json:"error"`
 }
 
-const appversion = "0.0.17"
+const appversion = "0.0.18"
 
 var (
 	apikey        string
