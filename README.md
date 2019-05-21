@@ -18,7 +18,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API Key
   --create                           Create snitch, requires --name and --interval, optional --tags & --notes
-  --config [config file]             Configuration file, default = config.yaml
+  --config [config file]             Configuration file: /path/to/file.yaml, default = ./config.yaml
   --displayconfig                    Display configuration
   --help                             Display help
   --message [message to send]        Message to send, default = "2006-01-02T15:04:05Z07:00" format

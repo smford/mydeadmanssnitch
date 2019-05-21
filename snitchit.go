@@ -76,9 +76,7 @@ func init() {
 
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
-	flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
-	//configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
-	//configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
+	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
 	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
 	flag.String("delete", "", "Delete a snitch")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -582,7 +580,7 @@ snitchit
 
   --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API key
-  --config [config file]             Configuration file, default = config.yaml
+  --config [config file]             Configuration file: /path/to/file.yaml, default = ./config.yaml
   --create                           Create snitch, requires --name and --interval, optional --tags & --notes
   --displayconfig                    Display configuration
   --help                             Display help
