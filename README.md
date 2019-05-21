@@ -18,7 +18,7 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API Key
   --create                           Create snitch, requires --name and --interval, optional --tags & --notes
-  --config [config file]             Configuration file, default = config.yaml
+  --config [config file]             Configuration file: /path/to/file.yaml, default = ./config.yaml
   --displayconfig                    Display configuration
   --help                             Display help
   --message [message to send]        Message to send, default = "2006-01-02T15:04:05Z07:00" format
@@ -36,6 +36,12 @@ Typically used in cronjob to send snitch messages, but useful for self registrat
   --version                          Version
 ```
 
+## Environment Variables
+
+```
+# export SNITCHIT_CONFIG="/path/to/config/file.yaml"
+```
+
 ## Configuration file
 ```
 apikey: my-api-key
@@ -47,3 +53,36 @@ snitches:
 - snitch2
 - snitch3
 ```
+
+## Installation
+
+1. Download and install latest version from master in to GOBIN path:
+
+	```
+	# go get -v github.com/smford/snitchit
+	```
+
+1. Create a configuration file
+
+	```
+	# vim /path/to/config/file.yaml
+	```
+
+1. Run!
+
+	```
+	# snitchit --config /path/to/config/file.yaml
+	```
+
+	Or
+	```
+	# export SNITCHIT_CONFIG="/path/to/config/file.yaml"
+	# snitchit
+	```
+
+	Or
+	```
+	# cd /path/to/config
+	# mv file.yaml config.yaml
+	# snitchit
+	```

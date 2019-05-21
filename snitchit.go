@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -55,7 +56,7 @@ type dmsResp struct {
 	Error string `json:"error"`
 }
 
-const appversion = "0.0.17"
+const appversion = "0.0.18"
 
 var (
 	apikey        string
@@ -70,9 +71,12 @@ var (
 )
 
 func init() {
+	viper.SetEnvPrefix("SNITCHIT")
+	viper.BindEnv("config")
+
 	flag.String("alert", "basic", "Alert type: \"basic\" or \"smart\"")
 	flag.String("apikey", "", "Deadmanssnitch.com API Key")
-	configFile := flag.String("config", "config.yaml", "Configuration file, default = config.yaml")
+	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
 	flag.Bool("create", false, "Create snitch, requires --name and --interval, optional --tags & --notes")
 	flag.String("delete", "", "Delete a snitch")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -81,7 +85,6 @@ func init() {
 	tempmessage := flag.String("message", "", "Mesage to send, default = \"2006-01-02T15:04:05Z07:00\" format")
 	flag.String("name", "", "Name of snitch")
 	flag.String("notes", "", "Notes")
-	configPath := flag.String("path", ".", "Path to configuration file, default = current directory")
 	flag.String("pause", "", "Pause a snitch")
 	flag.String("plan", "free", "Plan type: \"free\", \"small\", \"medium\" or \"large\", default = free")
 	showsnitches = *flag.Bool("show", false, "Show snitches")
@@ -107,24 +110,40 @@ func init() {
 		os.Exit(0)
 	}
 
+	configdir, configfile := filepath.Split(viper.GetString("config"))
+
+	// set default configuration directory to current directory
+	if configdir == "" {
+		configdir = "."
+	}
+
+	if viper.GetBool("verbose") {
+		fmt.Println("   DIR:", configdir)
+		fmt.Println("  FILE:", configfile)
+	}
+
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(*configPath)
+	viper.AddConfigPath(configdir)
+
+	config := strings.TrimSuffix(configfile, ".yaml")
+	config = strings.TrimSuffix(config, ".yml")
+
+	viper.SetConfigName(config)
+	err := viper.ReadInConfig()
+	if err != nil {
+		if !viper.GetBool("silent") {
+			fmt.Println("ERROR: No config file found")
+			if viper.GetBool("verbose") {
+				fmt.Printf("%s\n", err)
+			}
+			os.Exit(1)
+		}
+	}
 
 	if *tempmessage == "" {
 		message = time.Now().Format(time.RFC3339)
 	} else {
 		message = *tempmessage
-	}
-
-	config := strings.TrimSuffix(*configFile, ".yaml")
-
-	viper.SetConfigName(config)
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		if !viper.GetBool("silent") {
-			fmt.Printf("%s\n", err)
-		}
 	}
 
 	if viper.GetString("snitch") == "" {
@@ -561,7 +580,7 @@ snitchit
 
   --alert [type]                     Alert type: "basic" or "smart"
   --apikey [api key]                 Deadmanssnitch.com API key
-  --config [config file]             Configuration file, default = config.yaml
+  --config [config file]             Configuration file: /path/to/file.yaml, default = ./config.yaml
   --create                           Create snitch, requires --name and --interval, optional --tags & --notes
   --displayconfig                    Display configuration
   --help                             Display help
