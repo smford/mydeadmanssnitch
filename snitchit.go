@@ -658,6 +658,11 @@ func actionSnitch2(todo string, token string, jsonpayload string) bool {
 	client.Timeout = time.Second * 15
 
 	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+
 	htmlData, _ := ioutil.ReadAll(resp.Body)
 
 	if verbose {
