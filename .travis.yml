@@ -11,7 +11,7 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 
 install:
-  - dep ensure -v
+  - $GOPATH/bin/dep ensure -v
 
 script:
   - go test -v
