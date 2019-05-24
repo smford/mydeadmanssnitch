@@ -385,7 +385,7 @@ func createSnitch(newsnitch newSnitch) {
 
 	// check if existing snitch exists
 	if !existSnitch(newsnitch) {
-		fmt.Printf("Snitch %s already exists\n")
+		fmt.Printf("Snitch %s already exists\n", newsnitch)
 	} else {
 		if actionSnitch2("create", "", string(jsonsnitch)) { // error here
 			fmt.Println("Successfully created snitch")
