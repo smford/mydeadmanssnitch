@@ -1,4 +1,4 @@
-[![Build Status Travis](https://travis-ci.org/smford/snitchit.svg?branch=master)](https://travis-ci.org/smford/snitchit) [![Go Report Card](https://goreportcard.com/badge/github.com/smford/snitchit)][![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status Travis](https://travis-ci.org/smford/snitchit.svg?branch=master)](https://travis-ci.org/smford/snitchit) [![Go Report Card](https://goreportcard.com/badge/github.com/smford/snitchit)](https://goreportcard.com/report/github.com/smford/snitchit) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 # Snitchit
 
